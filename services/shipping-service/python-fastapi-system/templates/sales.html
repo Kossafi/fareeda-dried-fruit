@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกการขาย - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .sales-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .pos-interface {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-selection {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .cart-summary {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            color: var(--text-dark);
+            position: sticky;
+            top: 2rem;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .product-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .product-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow-warm);
+            border-color: var(--primary-orange);
+        }
+
+        .product-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-deep-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-unit {
+            font-size: 0.8rem;
+            color: var(--text-brown);
+        }
+
+        .cart-item {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-details {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .qty-control {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .qty-control:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            padding: 0.25rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cart-total {
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .total-final {
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            padding-top: 0.5rem;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-box {
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .barcode-scanner {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .barcode-scanner:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 191, 0, 0.4);
+        }
+
+        .sales-history {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .receipt-modal .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px var(--shadow-soft);
+        }
+
+        .receipt-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .receipt-body {
+            padding: 2rem;
+            background: var(--bg-warm-white);
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .receipt-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-top: 2px solid var(--primary-orange);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .pos-interface {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-summary {
+                position: static;
+                max-height: none;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="sales-card">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-shopping-cart text-success"></i>
+                        ระบบขายผลไม้อบแห้ง
+                    </h1>
+                    <p class="text-muted mt-2">POS System - Point of Sale</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-primary" onclick="viewSalesHistory()">
+                            <i class="fas fa-history"></i> ประวัติการขาย
+                        </button>
+                        <button class="btn btn-success" onclick="newTransaction()">
+                            <i class="fas fa-plus"></i> ธุรกรรมใหม่
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POS Interface -->
+        <div class="pos-interface">
+            <!-- Product Selection -->
+            <div class="product-selection">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>เลือกสินค้า</h4>
+                    <span class="badge bg-primary">สินค้าทั้งหมด: <span id="totalProducts">0</span></span>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" class="search-input" id="productSearch" placeholder="ค้นหาสินค้า หรือ SKU...">
+                </div>
+                
+                <button class="barcode-scanner" onclick="openBarcodeScanner()">
+                    <i class="fas fa-qrcode"></i> สแกนบาร์โค้ด
+                </button>
+                
+                <div class="product-grid" id="productGrid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="cart-summary">
+                <h4 class="mb-3">
+                    <i class="fas fa-shopping-cart"></i> 
+                    ตะกร้าสินค้า
+                    <span class="badge bg-light text-dark ms-2" id="cartItemCount">0</span>
+                </h4>
+                
+                <div id="cartItems">
+                    <div class="text-center text-muted" id="emptyCart">
+                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                        <p>ยังไม่มีสินค้าในตะกร้า</p>
+                    </div>
+                </div>
+                
+                <div class="cart-total" id="cartTotal" style="display: none;">
+                    <div class="total-line">
+                        <span>รวมสินค้า:</span>
+                        <span id="subtotal">฿0.00</span>
+                    </div>
+                    <div class="total-line">
+                        <span>ส่วนลด:</span>
+                        <span id="discount">฿0.00</span>
+                    </div>
+                    <div class="total-line">
+                        <span>ภาษี (7%):</span>
+                        <span id="tax">฿0.00</span>
+                    </div>
+                    <div class="total-line total-final">
+                        <span>ยอดรวม:</span>
+                        <span id="grandTotal">฿0.00</span>
+                    </div>
+                </div>
+                
+                <button class="checkout-btn" id="checkoutBtn" onclick="processCheckout()" disabled>
+                    <i class="fas fa-credit-card"></i> ชำระเงิน
+                </button>
+                
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-warning btn-sm flex-fill" onclick="clearCart()">
+                        <i class="fas fa-trash"></i> ล้างตะกร้า
+                    </button>
+                    <button class="btn btn-info btn-sm flex-fill" onclick="holdTransaction()">
+                        <i class="fas fa-pause"></i> พักไว้
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales History -->
+        <div class="sales-history" id="salesHistory" style="display: none;">
+            <h4 class="mb-3">ประวัติการขายวันนี้</h4>
+            <div id="salesHistoryList">
+                <!-- Sales history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div class="modal fade receipt-modal" id="receiptModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="receipt-header">
+                    <h3>🧾 ใบเสร็จรับเงิน</h3>
+                    <p class="mb-0">ระบบจัดการสต๊อคผลไม้อบแห้ง</p>
+                </div>
+                <div class="receipt-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>เลขที่ใบเสร็จ:</strong> <span id="receiptNumber">-</span>
+                        </div>
+                        <div class="col-6 text-end">
+                            <strong>วันที่:</strong> <span id="receiptDate">-</span>
+                        </div>
+                    </div>
+                    
+                    <div id="receiptItems">
+                        <!-- Receipt items will be populated here -->
+                    </div>
+                    
+                    <div class="receipt-total">
+                        <div class="d-flex justify-content-between">
+                            <span>ยอดรวมทั้งสิ้น:</span>
+                            <span id="receiptGrandTotal">฿0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">ขอบคุณที่ใช้บริการ</p>
+                        <small class="text-muted">เก็บใบเสร็จนี้ไว้เป็นหลักฐาน</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                        <i class="fas fa-print"></i> พิมพ์ใบเสร็จ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let products = [];
+        let cart = [];
+        let salesHistory = [];
+        let currentTransactionId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            loadSalesHistory();
+            initializeSearch();
+        });
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/products');
+                const data = await response.json();
+                products = data.products;
+                displayProducts(products);
+                document.getElementById('totalProducts').textContent = products.length;
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        function displayProducts(productsToShow) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+
+            const fruitEmojis = ['🥭', '🍇', '🍎', '🍌', '🍍'];
+
+            productsToShow.forEach((product, index) => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-item';
+                productDiv.onclick = () => addToCart(product);
+                
+                productDiv.innerHTML = `
+                    <div class="product-emoji">${fruitEmojis[index % fruitEmojis.length]}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">฿${product.price.toFixed(2)}</div>
+                    <div class="product-unit">ต่อ ${product.unit}</div>
+                `;
+                
+                productGrid.appendChild(productDiv);
+            });
+        }
+
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.sku === product.sku);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...product,
+                    quantity: 1
+                });
+            }
+            
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            const emptyCart = document.getElementById('emptyCart');
+            
+            if (cart.length === 0) {
+                emptyCart.style.display = 'block';
+                cartItems.innerHTML = '<div class="text-center text-muted" id="emptyCart"><i class="fas fa-shopping-cart fa-2x mb-2"></i><p>ยังไม่มีสินค้าในตะกร้า</p></div>';
+                return;
+            }
+            
+            emptyCart.style.display = 'none';
+            cartItems.innerHTML = '';
+            
+            cart.forEach(item => {
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-details">฿${item.price.toFixed(2)} × ${item.quantity} = ฿${(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-control" onclick="updateQuantity('${item.sku}', -1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" class="qty-input" value="${item.quantity}" min="1" 
+                               onchange="setQuantity('${item.sku}', this.value)">
+                        <button class="qty-control" onclick="updateQuantity('${item.sku}', 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="qty-control" onclick="removeFromCart('${item.sku}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+        }
+
+        function updateQuantity(sku, change) {
+            const item = cart.find(item => item.sku === sku);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(sku);
+                } else {
+                    updateCartDisplay();
+                    updateCartSummary();
+                }
+            }
+        }
+
+        function setQuantity(sku, quantity) {
+            const item = cart.find(item => item.sku === sku);
+            if (item) {
+                item.quantity = Math.max(1, parseInt(quantity) || 1);
+                updateCartDisplay();
+                updateCartSummary();
+            }
+        }
+
+        function removeFromCart(sku) {
+            cart = cart.filter(item => item.sku !== sku);
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        function updateCartSummary() {
+            const cartItemCount = document.getElementById('cartItemCount');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discount = 0; // Can be implemented later
+            const tax = subtotal * 0.07;
+            const grandTotal = subtotal - discount + tax;
+            
+            cartItemCount.textContent = totalItems;
+            
+            if (cart.length > 0) {
+                cartTotal.style.display = 'block';
+                checkoutBtn.disabled = false;
+                
+                document.getElementById('subtotal').textContent = `฿${subtotal.toFixed(2)}`;
+                document.getElementById('discount').textContent = `฿${discount.toFixed(2)}`;
+                document.getElementById('tax').textContent = `฿${tax.toFixed(2)}`;
+                document.getElementById('grandTotal').textContent = `฿${grandTotal.toFixed(2)}`;
+            } else {
+                cartTotal.style.display = 'none';
+                checkoutBtn.disabled = true;
+            }
+        }
+
+        function clearCart() {
+            if (cart.length > 0 && confirm('ต้องการล้างตะกร้าสินค้าหรือไม่?')) {
+                cart = [];
+                updateCartDisplay();
+                updateCartSummary();
+            }
+        }
+
+        function processCheckout() {
+            if (cart.length === 0) return;
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.07;
+            const grandTotal = subtotal + tax;
+            
+            const transaction = {
+                id: 'TXN' + Date.now(),
+                date: new Date().toISOString(),
+                items: [...cart],
+                subtotal: subtotal,
+                tax: tax,
+                total: grandTotal,
+                timestamp: new Date().toLocaleString('th-TH')
+            };
+            
+            salesHistory.push(transaction);
+            currentTransactionId = transaction.id;
+            
+            // Show receipt
+            showReceipt(transaction);
+            
+            // Clear cart
+            cart = [];
+            updateCartDisplay();
+            updateCartSummary();
+            
+            // Update sales history display
+            if (document.getElementById('salesHistory').style.display !== 'none') {
+                displaySalesHistory();
+            }
+        }
+
+        function showReceipt(transaction) {
+            document.getElementById('receiptNumber').textContent = transaction.id;
+            document.getElementById('receiptDate').textContent = transaction.timestamp;
+            document.getElementById('receiptGrandTotal').textContent = `฿${transaction.total.toFixed(2)}`;
+            
+            const receiptItems = document.getElementById('receiptItems');
+            receiptItems.innerHTML = '';
+            
+            transaction.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'receipt-item';
+                itemDiv.innerHTML = `
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small>฿${item.price.toFixed(2)} × ${item.quantity}</small>
+                    </div>
+                    <div>฿${(item.price * item.quantity).toFixed(2)}</div>
+                `;
+                receiptItems.appendChild(itemDiv);
+            });
+            
+            new bootstrap.Modal(document.getElementById('receiptModal')).show();
+        }
+
+        function printReceipt() {
+            const printContent = document.querySelector('.receipt-modal .modal-content').innerHTML;
+            const printWindow = window.open('', '', 'width=800,height=600');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>ใบเสร็จรับเงิน</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; margin: 20px; }
+                        .receipt-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        .receipt-item { display: flex; justify-content: space-between; padding: 5px 0; }
+                        .receipt-total { border-top: 2px solid #333; padding-top: 10px; font-weight: bold; }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function newTransaction() {
+            clearCart();
+            document.getElementById('salesHistory').style.display = 'none';
+        }
+
+        function viewSalesHistory() {
+            const salesHistoryDiv = document.getElementById('salesHistory');
+            if (salesHistoryDiv.style.display === 'none') {
+                salesHistoryDiv.style.display = 'block';
+                displaySalesHistory();
+            } else {
+                salesHistoryDiv.style.display = 'none';
+            }
+        }
+
+        function displaySalesHistory() {
+            const salesHistoryList = document.getElementById('salesHistoryList');
+            salesHistoryList.innerHTML = '';
+            
+            if (salesHistory.length === 0) {
+                salesHistoryList.innerHTML = '<p class="text-center text-muted">ยังไม่มีการขายวันนี้</p>';
+                return;
+            }
+            
+            salesHistory.reverse().forEach(transaction => {
+                const transactionDiv = document.createElement('div');
+                transactionDiv.className = 'card mb-3';
+                transactionDiv.innerHTML = `
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>${transaction.id}</h6>
+                                <small class="text-muted">${transaction.timestamp}</small>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <h5 class="text-success">฿${transaction.total.toFixed(2)}</h5>
+                                <small>${transaction.items.length} รายการ</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                salesHistoryList.appendChild(transactionDiv);
+            });
+        }
+
+        function holdTransaction() {
+            if (cart.length > 0) {
+                alert('💾 พักธุรกรรมไว้แล้ว - ฟีเจอร์นี้จะพัฒนาเพิ่มเติม');
+            }
+        }
+
+        function openBarcodeScanner() {
+            alert('📱 เปิด Barcode Scanner - ฟีเจอร์นี้จะพัฒนาเพิ่มเติม');
+        }
+
+        function initializeSearch() {
+            const searchInput = document.getElementById('productSearch');
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredProducts = products.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.sku.toLowerCase().includes(searchTerm)
+                );
+                displayProducts(filteredProducts);
+            });
+        }
+
+        function loadSalesHistory() {
+            // Mock sales history - in real app, this would come from backend
+            salesHistory = [];
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ฟอร์มรับสินค้าเข้าคลัง - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .form-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 900px;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--success-green);
+        }
+
+        .form-header h1 {
+            color: var(--success-green);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            border-left: 4px solid var(--success-green);
+        }
+
+        .form-section h3 {
+            color: var(--text-brown);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--success-green);
+            box-shadow: 0 0 0 0.2rem rgba(50, 205, 50, 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px var(--shadow-soft);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-color: rgba(50, 205, 50, 0.2);
+        }
+
+        .status-match {
+            background-color: #D1F2D1 !important;
+            color: #155724;
+            font-weight: 600;
+        }
+
+        .status-short {
+            background-color: #F8D7DA !important;
+            color: #721C24;
+            font-weight: 600;
+        }
+
+        .status-over {
+            background-color: #CCE5FF !important;
+            color: #004085;
+            font-weight: 600;
+        }
+
+        .add-item-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(50, 205, 50, 0.2);
+        }
+
+        .summary-item.highlight {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--success-green);
+            border-bottom: 2px solid var(--success-green);
+            padding-top: 1rem;
+        }
+
+        .preview-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 2px solid var(--success-green);
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .remove-item-btn {
+            background: var(--danger-red);
+            border: none;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <div class="ms-auto">
+                <a href="/" class="btn btn-outline-dark">
+                    <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>
+                    <i class="fas fa-truck-loading"></i>
+                    ฟอร์มรับสินค้าเข้าคลัง
+                </h1>
+                <p class="text-muted">บันทึกการรับสินค้าจากซัพพลายเออร์และตรวจสอบความถูกต้อง</p>
+            </div>
+
+            <form id="goodsReceiptForm">
+                <!-- ข้อมูลการรับสินค้า -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-info-circle"></i>
+                        ข้อมูลการรับสินค้า
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">เลขที่ใบรับสินค้า</label>
+                                <input type="text" class="form-control" id="grNumber" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">เลขที่ใบสั่งซื้ออ้างอิง</label>
+                                <input type="text" class="form-control" id="poReference" placeholder="PO-xxxxxxxx" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">วันที่รับสินค้า</label>
+                                <input type="date" class="form-control" id="receiptDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ผู้รับสินค้า</label>
+                                <input type="text" class="form-control" id="receivedBy" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ข้อมูลซัพพลายเออร์ -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-truck"></i>
+                        ข้อมูลซัพพลายเออร์
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ชื่อซัพพลายเออร์</label>
+                                <input type="text" class="form-control" id="supplierName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">เบอร์โทรศัพท์</label>
+                                <input type="tel" class="form-control" id="supplierPhone" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ที่อยู่</label>
+                        <input type="text" class="form-control" id="supplierAddress" required>
+                    </div>
+                </div>
+
+                <!-- การเปรียบเทียบสินค้า -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-balance-scale"></i>
+                        การเปรียบเทียบสินค้า (จำนวนที่สั่ง vs จำนวนที่รับ)
+                    </h3>
+                    <div class="comparison-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>รายการสินค้า</th>
+                                    <th>จำนวนที่สั่ง</th>
+                                    <th>หน่วย</th>
+                                    <th>จำนวนที่รับจริง</th>
+                                    <th>ส่วนต่าง</th>
+                                    <th>สถานะ</th>
+                                    <th>ลบ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                                <tr>
+                                    <td>
+                                        <input type="text" class="form-control" name="itemName[]" placeholder="ชื่อสินค้า" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control ordered-qty" name="orderedQty[]" min="1" required>
+                                    </td>
+                                    <td>
+                                        <select class="form-control" name="itemUnit[]" required>
+                                            <option value="">หน่วย</option>
+                                            <option value="กก.">กก.</option>
+                                            <option value="กรัม">กรัม</option>
+                                            <option value="ชิ้น">ชิ้น</option>
+                                            <option value="ลัง">ลัง</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control received-qty" name="receivedQty[]" min="0" required>
+                                    </td>
+                                    <td>
+                                        <span class="difference">0</span>
+                                    </td>
+                                    <td>
+                                        <span class="status">ตรงกัน</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="remove-item-btn" onclick="removeComparisonItem(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="add-item-btn mt-3" onclick="addComparisonItem()">
+                        <i class="fas fa-plus"></i> เพิ่มรายการสินค้า
+                    </button>
+                </div>
+
+                <!-- สรุปผลการรับสินค้า -->
+                <div class="summary-section">
+                    <h4>
+                        <i class="fas fa-clipboard-check"></i>
+                        สรุปผลการรับสินค้า
+                    </h4>
+                    <div class="summary-item">
+                        <span>จำนวนรายการทั้งหมด:</span>
+                        <span id="totalItems">1 รายการ</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>รายการที่รับตรงกัน:</span>
+                        <span id="matchItems" class="text-success">0 รายการ</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>รายการที่รับขาด:</span>
+                        <span id="shortItems" class="text-danger">0 รายการ</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>รายการที่รับเกิน:</span>
+                        <span id="overItems" class="text-info">0 รายการ</span>
+                    </div>
+                    <div class="summary-item highlight">
+                        <span>สถานะการรับสินค้า:</span>
+                        <span id="overallStatus">ยังไม่ได้กรอกข้อมูล</span>
+                    </div>
+                </div>
+
+                <!-- หมายเหตุ -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-sticky-note"></i>
+                        หมายเหตุ
+                    </h3>
+                    <textarea class="form-control" id="receiptNotes" rows="3" placeholder="หมายเหตุเกี่ยวกับการรับสินค้า (ถ้ามี)"></textarea>
+                </div>
+
+                <!-- ปุ่มดำเนินการ -->
+                <div class="text-center">
+                    <button type="button" class="btn btn-primary me-3" onclick="previewReceipt()">
+                        <i class="fas fa-eye"></i> ดูตัวอย่าง
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="confirmReceipt()">
+                        <i class="fas fa-check-circle"></i> ยืนยันรับสินค้าเข้าคลัง
+                    </button>
+                </div>
+            </form>
+
+            <!-- ตัวอย่างเอกสาร -->
+            <div class="preview-section" id="previewSection">
+                <h4>
+                    <i class="fas fa-file-alt"></i>
+                    ตัวอย่างใบรับสินค้า
+                </h4>
+                <div id="previewContent"></div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                        <i class="fas fa-print"></i> ปริ้นท์ใบรับสินค้า
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Generate GR Number
+        function generateGRNumber() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const time = String(date.getHours()).padStart(2, '0') + String(date.getMinutes()).padStart(2, '0');
+            return `GR-${year}${month}${day}-${time}`;
+        }
+
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('grNumber').value = generateGRNumber();
+            document.getElementById('receiptDate').value = new Date().toISOString().split('T')[0];
+            
+            // Add event listeners for comparison calculation
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('ordered-qty') || e.target.classList.contains('received-qty')) {
+                    calculateComparison();
+                }
+            });
+        });
+
+        // Add comparison item
+        function addComparisonItem() {
+            const tbody = document.getElementById('comparisonTableBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>
+                    <input type="text" class="form-control" name="itemName[]" placeholder="ชื่อสินค้า" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control ordered-qty" name="orderedQty[]" min="1" required>
+                </td>
+                <td>
+                    <select class="form-control" name="itemUnit[]" required>
+                        <option value="">หน่วย</option>
+                        <option value="กก.">กก.</option>
+                        <option value="กรัม">กรัม</option>
+                        <option value="ชิ้น">ชิ้น</option>
+                        <option value="ลัง">ลัง</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control received-qty" name="receivedQty[]" min="0" required>
+                </td>
+                <td>
+                    <span class="difference">0</span>
+                </td>
+                <td>
+                    <span class="status">ตรงกัน</span>
+                </td>
+                <td>
+                    <button type="button" class="remove-item-btn" onclick="removeComparisonItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            calculateComparison();
+        }
+
+        // Remove comparison item
+        function removeComparisonItem(button) {
+            const row = button.closest('tr');
+            const tbody = document.getElementById('comparisonTableBody');
+            if (tbody.children.length > 1) {
+                row.remove();
+                calculateComparison();
+            } else {
+                alert('ต้องมีรายการสินค้าอย่างน้อย 1 รายการ');
+            }
+        }
+
+        // Calculate comparison
+        function calculateComparison() {
+            const rows = document.querySelectorAll('#comparisonTableBody tr');
+            let totalItems = 0;
+            let matchItems = 0;
+            let shortItems = 0;
+            let overItems = 0;
+            
+            rows.forEach(row => {
+                const ordered = parseFloat(row.querySelector('.ordered-qty').value) || 0;
+                const received = parseFloat(row.querySelector('.received-qty').value) || 0;
+                const difference = received - ordered;
+                
+                const differenceSpan = row.querySelector('.difference');
+                const statusSpan = row.querySelector('.status');
+                
+                if (ordered > 0 && received >= 0) {
+                    totalItems++;
+                    
+                    differenceSpan.textContent = difference > 0 ? `+${difference}` : difference.toString();
+                    
+                    if (difference === 0) {
+                        statusSpan.textContent = 'ตรงกัน';
+                        statusSpan.className = 'status status-match';
+                        matchItems++;
+                    } else if (difference < 0) {
+                        statusSpan.textContent = 'ขาด';
+                        statusSpan.className = 'status status-short';
+                        shortItems++;
+                    } else {
+                        statusSpan.textContent = 'เกิน';
+                        statusSpan.className = 'status status-over';
+                        overItems++;
+                    }
+                } else {
+                    differenceSpan.textContent = '0';
+                    statusSpan.textContent = 'ตรงกัน';
+                    statusSpan.className = 'status';
+                }
+            });
+            
+            // Update summary
+            document.getElementById('totalItems').textContent = `${totalItems} รายการ`;
+            document.getElementById('matchItems').textContent = `${matchItems} รายการ`;
+            document.getElementById('shortItems').textContent = `${shortItems} รายการ`;
+            document.getElementById('overItems').textContent = `${overItems} รายการ`;
+            
+            // Update overall status
+            const overallStatus = document.getElementById('overallStatus');
+            if (totalItems === 0) {
+                overallStatus.textContent = 'ยังไม่ได้กรอกข้อมูล';
+                overallStatus.className = '';
+            } else if (matchItems === totalItems) {
+                overallStatus.textContent = 'รับสินค้าครบทุกรายการ ✅';
+                overallStatus.className = 'text-success';
+            } else {
+                overallStatus.textContent = 'มีรายการที่รับไม่ครบหรือเกิน ⚠️';
+                overallStatus.className = 'text-warning';
+            }
+        }
+
+        // Collect form data
+        function collectReceiptData() {
+            const formData = {
+                grNumber: document.getElementById('grNumber').value,
+                poReference: document.getElementById('poReference').value,
+                receiptDate: document.getElementById('receiptDate').value,
+                receivedBy: document.getElementById('receivedBy').value,
+                supplier: {
+                    name: document.getElementById('supplierName').value,
+                    phone: document.getElementById('supplierPhone').value,
+                    address: document.getElementById('supplierAddress').value
+                },
+                items: [],
+                notes: document.getElementById('receiptNotes').value
+            };
+            
+            // Collect comparison items
+            const rows = document.querySelectorAll('#comparisonTableBody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('input[name="itemName[]"]').value;
+                const ordered = parseFloat(row.querySelector('input[name="orderedQty[]"]').value) || 0;
+                const unit = row.querySelector('select[name="itemUnit[]"]').value;
+                const received = parseFloat(row.querySelector('input[name="receivedQty[]"]').value) || 0;
+                
+                if (name && ordered > 0 && unit) {
+                    const difference = received - ordered;
+                    const status = difference === 0 ? 'ตรงกัน' : difference > 0 ? 'เกิน' : 'ขาด';
+                    
+                    formData.items.push({
+                        name,
+                        ordered,
+                        received,
+                        unit,
+                        difference,
+                        status
+                    });
+                }
+            });
+            
+            return formData;
+        }
+
+        // Preview receipt
+        function previewReceipt() {
+            const form = document.getElementById('goodsReceiptForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = collectReceiptData();
+            const previewHTML = generateReceiptPreviewHTML(formData);
+            
+            document.getElementById('previewContent').innerHTML = previewHTML;
+            document.getElementById('previewSection').style.display = 'block';
+            
+            // Scroll to preview
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Generate preview HTML
+        function generateReceiptPreviewHTML(data) {
+            const matchItems = data.items.filter(item => item.difference === 0).length;
+            const shortItems = data.items.filter(item => item.difference < 0).length;
+            const overItems = data.items.filter(item => item.difference > 0).length;
+            
+            let itemsHTML = '';
+            data.items.forEach((item, index) => {
+                const statusClass = item.difference === 0 ? 'table-success' : 
+                                  item.difference > 0 ? 'table-info' : 'table-danger';
+                
+                itemsHTML += `
+                    <tr class="${statusClass}">
+                        <td>${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td class="text-center">${item.ordered}</td>
+                        <td class="text-center">${item.received}</td>
+                        <td class="text-center">${item.unit}</td>
+                        <td class="text-center">${item.difference > 0 ? '+' : ''}${item.difference}</td>
+                        <td class="text-center"><strong>${item.status}</strong></td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <div class="receipt-preview">
+                    <div class="text-center mb-4">
+                        <h4>ใบรับสินค้า (Goods Receipt)</h4>
+                        <h5>ระบบจัดการสต๊อคผลไม้อบแห้ง</h5>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>เลขที่ใบรับสินค้า:</strong> ${data.grNumber}<br>
+                            <strong>เลขที่ PO อ้างอิง:</strong> ${data.poReference}<br>
+                            <strong>วันที่รับสินค้า:</strong> ${new Date(data.receiptDate).toLocaleDateString('th-TH')}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>ผู้รับสินค้า:</strong> ${data.receivedBy}<br>
+                            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+                            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>ซัพพลายเออร์:</strong><br>
+                        ${data.supplier.name}<br>
+                        โทร: ${data.supplier.phone}<br>
+                        ที่อยู่: ${data.supplier.address}
+                    </div>
+                    
+                    <table class="table table-bordered">
+                        <thead class="table-success">
+                            <tr>
+                                <th>ลำดับ</th>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวนที่สั่ง</th>
+                                <th>จำนวนที่รับ</th>
+                                <th>หน่วย</th>
+                                <th>ส่วนต่าง</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="row">
+                        <div class="col-md-8"></div>
+                        <div class="col-md-4">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>รายการทั้งหมด:</strong></td>
+                                    <td class="text-end">${data.items.length} รายการ</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>รายการที่ตรงกัน:</strong></td>
+                                    <td class="text-end">${matchItems} รายการ</td>
+                                </tr>
+                                <tr class="table-danger">
+                                    <td><strong>รายการที่ขาด:</strong></td>
+                                    <td class="text-end">${shortItems} รายการ</td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td><strong>รายการที่เกิน:</strong></td>
+                                    <td class="text-end">${overItems} รายการ</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    ${data.notes ? `<div class="mt-3"><strong>หมายเหตุ:</strong><br>${data.notes}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Print receipt
+        function printReceipt() {
+            const formData = collectReceiptData();
+            const printContent = generateReceiptPrintHTML(formData);
+            
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Generate print HTML
+        function generateReceiptPrintHTML(data) {
+            const matchItems = data.items.filter(item => item.difference === 0).length;
+            const shortItems = data.items.filter(item => item.difference < 0).length;
+            const overItems = data.items.filter(item => item.difference > 0).length;
+            
+            let itemsHTML = '';
+            data.items.forEach((item, index) => {
+                const statusColor = item.difference === 0 ? '#D1F2D1' : 
+                                  item.difference > 0 ? '#CCE5FF' : '#F8D7DA';
+                
+                itemsHTML += `
+                    <tr style="background-color: ${statusColor}">
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.ordered}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.received}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.unit}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.difference > 0 ? '+' : ''}${item.difference}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;"><strong>${item.status}</strong></td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบรับสินค้า ${data.grNumber}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Prompt', Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .company-info { margin-bottom: 20px; }
+                        .receipt-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                        .supplier-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background-color: #32CD32; color: white; font-weight: 600; }
+                        .summary-section { margin-top: 20px; }
+                        .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
+                        .signature-box { text-align: center; width: 200px; }
+                        .signature-line { border-bottom: 1px solid #000; margin: 30px 0 10px 0; height: 50px; }
+                        @media print {
+                            body { margin: 0; font-size: 12px; }
+                            .signature-line { height: 40px; margin: 20px 0 10px 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>ใบรับสินค้า (Goods Receipt)</h1>
+                        <h2>ระบบจัดการสต๊อคผลไม้อบแห้ง</h2>
+                    </div>
+
+                    <div class="company-info">
+                        <strong>บริษัท ผลไม้อบแห้ง จำกัด</strong><br>
+                        123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110<br>
+                        โทร: 02-123-4567 | อีเมล: info@driedfruit.co.th
+                    </div>
+
+                    <div class="receipt-info">
+                        <div>
+                            <strong>เลขที่ใบรับสินค้า:</strong> ${data.grNumber}<br>
+                            <strong>เลขที่ PO อ้างอิง:</strong> ${data.poReference}<br>
+                            <strong>วันที่รับสินค้า:</strong> ${new Date(data.receiptDate).toLocaleDateString('th-TH')}
+                        </div>
+                        <div>
+                            <strong>ผู้รับสินค้า:</strong> ${data.receivedBy}<br>
+                            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+                            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+                        </div>
+                    </div>
+
+                    <div class="supplier-info">
+                        <strong>ซัพพลายเออร์:</strong><br>
+                        ${data.supplier.name}<br>
+                        โทร: ${data.supplier.phone}<br>
+                        ที่อยู่: ${data.supplier.address}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ลำดับ</th>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวนที่สั่ง</th>
+                                <th>จำนวนที่รับ</th>
+                                <th>หน่วย</th>
+                                <th>ส่วนต่าง</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+
+                    <div class="summary-section">
+                        <table style="width: 400px; margin-left: auto;">
+                            <tr>
+                                <td style="text-align: right; padding: 5px;"><strong>รายการทั้งหมด:</strong></td>
+                                <td style="text-align: right; padding: 5px;">${data.items.length} รายการ</td>
+                            </tr>
+                            <tr style="background-color: #D1F2D1;">
+                                <td style="text-align: right; padding: 5px;"><strong>รายการที่ตรงกัน:</strong></td>
+                                <td style="text-align: right; padding: 5px;">${matchItems} รายการ</td>
+                            </tr>
+                            <tr style="background-color: #F8D7DA;">
+                                <td style="text-align: right; padding: 5px;"><strong>รายการที่ขาด:</strong></td>
+                                <td style="text-align: right; padding: 5px;">${shortItems} รายการ</td>
+                            </tr>
+                            <tr style="background-color: #CCE5FF;">
+                                <td style="text-align: right; padding: 5px;"><strong>รายการที่เกิน:</strong></td>
+                                <td style="text-align: right; padding: 5px;">${overItems} รายการ</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    ${data.notes ? `<div style="margin-top: 20px;"><strong>หมายเหตุ:</strong><br>${data.notes}</div>` : ''}
+
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ผู้ส่งสินค้า</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ผู้รับสินค้า</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ผู้ตรวจสอบ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+                        *** เอกสารนี้ออกโดยระบบจัดการสต๊อคผลไม้อบแห้ง ***<br>
+                        ${matchItems === data.items.length ? 
+                            '✅ การรับสินค้าสมบูรณ์ทุกรายการ' : 
+                            '⚠️ พบความแตกต่างในการรับสินค้า กรุณาตรวจสอบ'}
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        // Confirm receipt
+        function confirmReceipt() {
+            const form = document.getElementById('goodsReceiptForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = collectReceiptData();
+            
+            if (formData.items.length === 0) {
+                alert('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ');
+                return;
+            }
+            
+            if (confirm('ต้องการยืนยันการรับสินค้าเข้าคลังหรือไม่?')) {
+                // Save receipt data
+                const receiptData = {
+                    ...formData,
+                    timestamp: new Date().toISOString(),
+                    status: 'confirmed'
+                };
+                
+                // Save to localStorage (in real app, send to server)
+                localStorage.setItem('lastGoodsReceipt', JSON.stringify(receiptData));
+                
+                // Auto print
+                printReceipt();
+                
+                // Send to Line (placeholder)
+                sendReceiptToLine(receiptData);
+                
+                alert('✅ ยืนยันการรับสินค้าเข้าคลังสำเร็จ!\n🖨️ กำลังปริ้นท์ใบรับสินค้า\n📱 กำลังส่งไปยัง Line');
+                
+                // Reset form
+                if (confirm('ต้องการล้างฟอร์มเพื่อรับสินค้าใหม่หรือไม่?')) {
+                    location.reload();
+                }
+            }
+        }
+
+        // Send to Line (placeholder function)
+        function sendReceiptToLine(receiptData) {
+            const matchItems = receiptData.items.filter(item => item.difference === 0).length;
+            const shortItems = receiptData.items.filter(item => item.difference < 0).length;
+            const overItems = receiptData.items.filter(item => item.difference > 0).length;
+            
+            const message = `📦 ใบรับสินค้าใหม่: ${receiptData.grNumber}\n` +
+                           `📋 PO อ้างอิง: ${receiptData.poReference}\n` +
+                           `🏢 ซัพพลายเออร์: ${receiptData.supplier.name}\n` +
+                           `📅 วันที่รับสินค้า: ${new Date(receiptData.receiptDate).toLocaleDateString('th-TH')}\n` +
+                           `📊 สรุป: ${receiptData.items.length} รายการ (✅${matchItems} ⚠️${shortItems} ℹ️${overItems})\n` +
+                           `👤 ผู้รับสินค้า: ${receiptData.receivedBy}`;
+            
+            console.log('Line message:', message);
+        }
+    </script>
+</body>
+</html>

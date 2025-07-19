@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --info-blue: #17A2B8;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .reports-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .report-filters {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.05) 50%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-canvas {
+            position: relative;
+            width: 100%;
+            height: 400px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--shadow-warm);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-brown);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .stat-increase {
+            color: var(--success-green);
+        }
+
+        .stat-decrease {
+            color: var(--danger-red);
+        }
+
+        .report-table {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, var(--success-green) 0%, var(--primary-orange) 100%);
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 191, 0, 0.4);
+        }
+
+        .form-control {
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .date-range-picker {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .summary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .summary-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .summary-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .summary-list li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .date-range-picker {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .chart-legend {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/barcode">
+                            <i class="fas fa-qrcode"></i> Barcode
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/delivery">
+                            <i class="fas fa-truck"></i> จัดส่ง
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/purchase">
+                            <i class="fas fa-shopping-bag"></i> จัดซื้อ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/goods-receipt">
+                            <i class="fas fa-truck-loading"></i> รับสินค้า
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="reports-card">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-chart-line text-primary"></i>
+                        รายงานและการวิเคราะห์
+                    </h1>
+                    <p class="text-muted mt-2">รายงานการขาย สต๊อค และประสิทธิภาพแบบ Real-time</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="export-buttons">
+                        <button class="btn btn-success" onclick="exportReport('pdf')">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                        <button class="btn btn-primary" onclick="exportReport('excel')">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                        <button class="btn btn-warning" onclick="printReport()">
+                            <i class="fas fa-print"></i> พิมพ์
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Filters -->
+        <div class="report-filters">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">ช่วงเวลา</label>
+                    <select class="form-control" id="dateRange" onchange="updateReports()">
+                        <option value="today">วันนี้</option>
+                        <option value="week">7 วันล่าสุด</option>
+                        <option value="month" selected>เดือนนี้</option>
+                        <option value="quarter">ไตรมาสนี้</option>
+                        <option value="year">ปีนี้</option>
+                        <option value="custom">กำหนดเอง</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ประเภทรายงาน</label>
+                    <select class="form-control" id="reportType" onchange="updateReports()">
+                        <option value="overview">ภาพรวม</option>
+                        <option value="sales">การขาย</option>
+                        <option value="inventory">สต๊อค</option>
+                        <option value="delivery">การจัดส่ง</option>
+                        <option value="profit">กำไร</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">สาขา</label>
+                    <select class="form-control" id="branchFilter" onchange="updateReports()">
+                        <option value="">ทุกสาขา</option>
+                        <option value="branch1">สาขาสยาม</option>
+                        <option value="branch2">สาขาเซ็นทรัล</option>
+                        <option value="branch3">สาขาพรอมพ์ทอง</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-number" id="totalRevenue">฿0</div>
+                <div class="stat-label">ยอดขายรวม</div>
+                <div class="stat-change stat-increase" id="revenueChange">+0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-number" id="totalOrders">0</div>
+                <div class="stat-label">คำสั่งซื้อ</div>
+                <div class="stat-change stat-increase" id="ordersChange">+0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-number" id="avgOrderValue">฿0</div>
+                <div class="stat-label">ค่าเฉลี่ยต่อออเดอร์</div>
+                <div class="stat-change stat-increase" id="avgOrderChange">+0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-number" id="profitMargin">0%</div>
+                <div class="stat-label">อัตรากำไร</div>
+                <div class="stat-change stat-increase" id="profitChange">+0%</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-area"></i>
+                        ยอดขายรายวัน
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie"></i>
+                        สัดส่วนการขาย
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        สินค้าขายดี Top 5
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        ระดับสต๊อค
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-title">
+                    <i class="fas fa-star"></i>
+                    สินค้าขายดี
+                </div>
+                <ul class="summary-list" id="topProductsList">
+                    <!-- Top products will be populated here -->
+                </ul>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    สต๊อคใกล้หมด
+                </div>
+                <ul class="summary-list" id="lowStockList">
+                    <!-- Low stock items will be populated here -->
+                </ul>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">
+                    <i class="fas fa-truck"></i>
+                    สถิติการจัดส่ง
+                </div>
+                <ul class="summary-list" id="deliveryStatsList">
+                    <!-- Delivery stats will be populated here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Detailed Report Table -->
+        <div class="report-table">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>รายงานรายละเอียด</h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="refreshTable()">
+                        <i class="fas fa-sync"></i> รีเฟรช
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="exportTableData()">
+                        <i class="fas fa-download"></i> ส่งออก
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>สินค้า</th>
+                            <th>จำนวน</th>
+                            <th>ยอดขาย</th>
+                            <th>กำไร</th>
+                            <th>สาขา</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <!-- Table data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let salesChart, pieChart, topProductsChart, inventoryChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateMockData();
+            initializeCharts();
+            updateReports();
+        });
+
+        function generateMockData() {
+            // Mock data for demonstration
+            window.mockData = {
+                revenue: 1250000,
+                orders: 1847,
+                avgOrderValue: 677,
+                profitMargin: 35,
+                salesData: [
+                    { date: '2024-01-01', amount: 45000 },
+                    { date: '2024-01-02', amount: 52000 },
+                    { date: '2024-01-03', amount: 48000 },
+                    { date: '2024-01-04', amount: 61000 },
+                    { date: '2024-01-05', amount: 55000 },
+                    { date: '2024-01-06', amount: 58000 },
+                    { date: '2024-01-07', amount: 63000 }
+                ],
+                productSales: [
+                    { name: 'มะม่วงแห้ง', value: 35 },
+                    { name: 'ลูกเกดแห้ง', value: 25 },
+                    { name: 'แอปเปิ้ลแห้ง', value: 20 },
+                    { name: 'กล้วยแห้ง', value: 15 },
+                    { name: 'อื่นๆ', value: 5 }
+                ],
+                topProducts: [
+                    { name: 'มะม่วงแห้ง', sales: 2500, revenue: 300000 },
+                    { name: 'ลูกเกดแห้ง', sales: 1800, revenue: 153000 },
+                    { name: 'แอปเปิ้ลแห้ง', sales: 1500, revenue: 142500 },
+                    { name: 'กล้วยแห้ง', sales: 1200, revenue: 90000 },
+                    { name: 'สับปะรดแห้ง', sales: 1000, revenue: 110000 }
+                ],
+                inventory: [
+                    { name: 'มะม่วงแห้ง', stock: 450, capacity: 500 },
+                    { name: 'ลูกเกดแห้ง', stock: 320, capacity: 400 },
+                    { name: 'แอปเปิ้ลแห้ง', stock: 180, capacity: 300 },
+                    { name: 'กล้วยแห้ง', stock: 90, capacity: 200 },
+                    { name: 'สับปะรดแห้ง', stock: 60, capacity: 150 }
+                ]
+            };
+        }
+
+        function initializeCharts() {
+            // Sales Chart
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'ยอดขาย (บาท)',
+                        data: [],
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pie Chart
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FFD700',
+                            '#FFA500',
+                            '#FF8C00',
+                            '#32CD32',
+                            '#17A2B8'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Top Products Chart
+            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+            topProductsChart = new Chart(topProductsCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'ยอดขาย (บาท)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 165, 0, 0.8)',
+                        borderColor: '#FFA500',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Inventory Chart
+            const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+            inventoryChart = new Chart(inventoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'สต๊อคปัจจุบัน',
+                        data: [],
+                        backgroundColor: 'rgba(50, 205, 50, 0.8)',
+                        borderColor: '#32CD32',
+                        borderWidth: 2
+                    }, {
+                        label: 'กำลังการผลิต',
+                        data: [],
+                        backgroundColor: 'rgba(255, 165, 0, 0.3)',
+                        borderColor: '#FFA500',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateReports() {
+            updateKPIs();
+            updateCharts();
+            updateSummaryCards();
+            updateReportTable();
+        }
+
+        function updateKPIs() {
+            const data = window.mockData;
+            
+            document.getElementById('totalRevenue').textContent = '฿' + data.revenue.toLocaleString();
+            document.getElementById('totalOrders').textContent = data.orders.toLocaleString();
+            document.getElementById('avgOrderValue').textContent = '฿' + data.avgOrderValue.toLocaleString();
+            document.getElementById('profitMargin').textContent = data.profitMargin + '%';
+            
+            // Mock percentage changes
+            document.getElementById('revenueChange').textContent = '+12.5%';
+            document.getElementById('ordersChange').textContent = '+8.3%';
+            document.getElementById('avgOrderChange').textContent = '+3.7%';
+            document.getElementById('profitChange').textContent = '+2.1%';
+        }
+
+        function updateCharts() {
+            const data = window.mockData;
+            
+            // Update Sales Chart
+            salesChart.data.labels = data.salesData.map(d => new Date(d.date).toLocaleDateString('th-TH'));
+            salesChart.data.datasets[0].data = data.salesData.map(d => d.amount);
+            salesChart.update();
+            
+            // Update Pie Chart
+            pieChart.data.labels = data.productSales.map(p => p.name);
+            pieChart.data.datasets[0].data = data.productSales.map(p => p.value);
+            pieChart.update();
+            
+            // Update Top Products Chart
+            topProductsChart.data.labels = data.topProducts.map(p => p.name);
+            topProductsChart.data.datasets[0].data = data.topProducts.map(p => p.revenue);
+            topProductsChart.update();
+            
+            // Update Inventory Chart
+            inventoryChart.data.labels = data.inventory.map(i => i.name);
+            inventoryChart.data.datasets[0].data = data.inventory.map(i => i.stock);
+            inventoryChart.data.datasets[1].data = data.inventory.map(i => i.capacity);
+            inventoryChart.update();
+        }
+
+        function updateSummaryCards() {
+            const data = window.mockData;
+            
+            // Top Products
+            const topProductsList = document.getElementById('topProductsList');
+            topProductsList.innerHTML = '';
+            data.topProducts.slice(0, 5).forEach(product => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${product.name}</span>
+                    <span class="fw-bold text-success">฿${product.revenue.toLocaleString()}</span>
+                `;
+                topProductsList.appendChild(li);
+            });
+            
+            // Low Stock
+            const lowStockList = document.getElementById('lowStockList');
+            lowStockList.innerHTML = '';
+            data.inventory.filter(i => i.stock / i.capacity < 0.3).forEach(item => {
+                const li = document.createElement('li');
+                const percentage = Math.round((item.stock / item.capacity) * 100);
+                li.innerHTML = `
+                    <span>${item.name}</span>
+                    <span class="fw-bold text-danger">${percentage}%</span>
+                `;
+                lowStockList.appendChild(li);
+            });
+            
+            // Delivery Stats
+            const deliveryStatsList = document.getElementById('deliveryStatsList');
+            deliveryStatsList.innerHTML = '';
+            const deliveryStats = [
+                { label: 'จัดส่งสำเร็จ', value: '98.5%' },
+                { label: 'เวลาเฉลี่ย', value: '2.3 ชม.' },
+                { label: 'ค่าขนส่ง', value: '฿45' }
+            ];
+            deliveryStats.forEach(stat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${stat.label}</span>
+                    <span class="fw-bold text-info">${stat.value}</span>
+                `;
+                deliveryStatsList.appendChild(li);
+            });
+        }
+
+        function updateReportTable() {
+            const tableBody = document.getElementById('reportTableBody');
+            tableBody.innerHTML = '';
+            
+            // Mock table data
+            const mockTableData = [
+                { date: '2024-01-07', product: 'มะม่วงแห้ง', qty: 125, sales: 15000, profit: 5250, branch: 'สยาม', status: 'สำเร็จ' },
+                { date: '2024-01-07', product: 'ลูกเกดแห้ง', qty: 80, sales: 6800, profit: 2380, branch: 'เซ็นทรัล', status: 'สำเร็จ' },
+                { date: '2024-01-07', product: 'แอปเปิ้ลแห้ง', qty: 95, sales: 9025, profit: 3159, branch: 'สยาม', status: 'สำเร็จ' },
+                { date: '2024-01-06', product: 'กล้วยแห้ง', qty: 110, sales: 8250, profit: 2888, branch: 'พรอมพ์ทอง', status: 'สำเร็จ' },
+                { date: '2024-01-06', product: 'สับปะรดแห้ง', qty: 75, sales: 8250, profit: 2888, branch: 'เซ็นทรัล', status: 'สำเร็จ' }
+            ];
+            
+            mockTableData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>${row.product}</td>
+                    <td>${row.qty.toLocaleString()}</td>
+                    <td class="text-success fw-bold">฿${row.sales.toLocaleString()}</td>
+                    <td class="text-primary fw-bold">฿${row.profit.toLocaleString()}</td>
+                    <td>${row.branch}</td>
+                    <td><span class="badge bg-success">${row.status}</span></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function exportReport(format) {
+            const reportType = document.getElementById('reportType').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            alert(`ส่งออกรายงาน ${reportType} ในรูปแบบ ${format.toUpperCase()} สำหรับช่วง ${dateRange} - ฟีเจอร์นี้จะพัฒนาเพิ่มเติม`);
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function refreshTable() {
+            const refreshBtn = document.querySelector('.btn-primary');
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> รีเฟรช';
+            
+            setTimeout(() => {
+                updateReportTable();
+                refreshBtn.innerHTML = '<i class="fas fa-sync"></i> รีเฟรช';
+            }, 1000);
+        }
+
+        function exportTableData() {
+            alert('ส่งออกข้อมูลตาราง - ฟีเจอร์นี้จะพัฒนาเพิ่มเติม');
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(updateReports, 300000);
+    </script>
+</body>
+</html>

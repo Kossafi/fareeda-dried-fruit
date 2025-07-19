@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดสาขา - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border-left: 4px solid var(--primary-orange);
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow-soft);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-active {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+            border: 2px solid var(--success-green);
+        }
+
+        .status-pending {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+            border: 2px solid var(--warning-amber);
+        }
+
+        .status-inactive {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+            border: 2px solid var(--danger-red);
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-brown);
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+        }
+
+        #branchLocationMap {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .activity-item {
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+
+        .performance-score {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .score-excellent {
+            color: var(--success-green);
+        }
+
+        .score-good {
+            color: var(--warning-amber);
+        }
+
+        .score-poor {
+            color: var(--danger-red);
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 5px var(--shadow-soft);
+        }
+
+        .stock-level {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .stock-high {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .stock-medium {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .stock-low {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .edit-form {
+            display: none;
+        }
+
+        .edit-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .action-button {
+            background: white;
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .action-button:hover {
+            background: var(--primary-orange);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .danger-button {
+            border-color: var(--danger-red);
+            color: var(--danger-red);
+        }
+
+        .danger-button:hover {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        .success-button {
+            border-color: var(--success-green);
+            color: var(--success-green);
+        }
+
+        .success-button:hover {
+            background: var(--success-green);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/branch-management">
+                <i class="fas fa-arrow-left me-2"></i>รายละเอียดสาขา
+            </a>
+            <div class="d-flex">
+                <button class="btn action-button" onclick="toggleEditMode()">
+                    <i class="fas fa-edit me-1"></i>แก้ไข
+                </button>
+                <button class="btn success-button" onclick="approveBranch()" id="approveBtn" style="display: none;">
+                    <i class="fas fa-check me-1"></i>อนุมัติ
+                </button>
+                <button class="btn danger-button" onclick="rejectBranch()" id="rejectBtn" style="display: none;">
+                    <i class="fas fa-times me-1"></i>ปฏิเสธ
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Branch Header -->
+        <div class="info-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <h1 class="me-3 mb-0" id="branchName">สาขาเซ็นทรัลปิ่นเกล้า</h1>
+                        <span class="status-badge status-active" id="branchStatus">เปิดบริการ</span>
+                    </div>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span id="branchAddress">เซ็นทรัลปิ่นเกล้า ชั้น 2 เลขที่ 7/222 ถนนบรมราชชนนี แขวงบางบำหรุ เขตบางพลัด กรุงเทพมหานคร 10700</span>
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-phone me-2"></i><span id="branchPhone">02-884-8888</span>
+                        <i class="fas fa-envelope ms-3 me-2"></i><span id="branchEmail">pinklao@driedfruits.co.th</span>
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-user-tie me-2"></i>ผู้จัดการ: <span id="managerName">นางสาวกรรณิกา สมใส</span>
+                        <span class="ms-3">📱 <span id="managerPhone">081-234-5678</span></span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="performance-score score-excellent" id="performanceScore">95%</div>
+                    <p class="mb-0">Performance Score</p>
+                    <small class="text-muted">รหัสสาขา: <strong id="branchId">BR-001</strong></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form (Hidden by default) -->
+        <div class="info-card edit-form" id="editForm">
+            <h4 class="mb-3"><i class="fas fa-edit me-2"></i>แก้ไขข้อมูลสาขา</h4>
+            <form id="branchEditForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">ชื่อสาขา</label>
+                        <input type="text" class="form-control" id="editBranchName">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">สถานะ</label>
+                        <select class="form-control" id="editBranchStatus">
+                            <option value="ACTIVE">เปิดบริการ</option>
+                            <option value="PENDING">รออนุมัติ</option>
+                            <option value="INACTIVE">ปิดชั่วคราว</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">ที่อยู่</label>
+                    <textarea class="form-control" id="editBranchAddress" rows="2"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">เบอร์โทรศัพท์</label>
+                        <input type="tel" class="form-control" id="editBranchPhone">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">อีเมล</label>
+                        <input type="email" class="form-control" id="editBranchEmail">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">ชื่อผู้จัดการ</label>
+                        <input type="text" class="form-control" id="editManagerName">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">เบอร์ผู้จัดการ</label>
+                        <input type="tel" class="form-control" id="editManagerPhone">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn action-button me-2" onclick="cancelEdit()">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBranchEdit()">บันทึก</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-primary" id="monthlyRevenue">฿850,000</div>
+                    <div class="metric-label">รายได้เดือนนี้</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-success" id="totalOrders">2,450</div>
+                    <div class="metric-label">ยอดออเดอร์</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-warning" id="avgOrderValue">฿347</div>
+                    <div class="metric-label">มูลค่าเฉลี่ย/ออเดอร์</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card">
+                    <div class="metric-value text-info" id="customerCount">1,245</div>
+                    <div class="metric-label">ลูกค้า</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Location -->
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>ยอดขายรายเดือน</h5>
+                    <canvas id="salesChart" height="100"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-map-marked-alt me-2"></i>ตำแหน่งสาขา</h5>
+                    <div id="branchLocationMap"></div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">โซนการจัดส่ง: <strong id="deliveryZone">ภาคกลาง</strong></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory and Activities -->
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="fas fa-boxes me-2"></i>สต๊อคปัจจุบัน</h5>
+                    <div id="inventoryList">
+                        <div class="inventory-item">
+                            <div>
+                                <strong>มะม่วงอบแห้ง Premium</strong>
+                                <br><small class="text-muted">DF-MANGO-001</small>
+                            </div>
+                            <div class="text-end">
+                                <div>25.2 kg</div>
+                                <span class="stock-level stock-high">สต๊อคดี</span>
+                            </div>
+                        </div>
+                        <div class="inventory-item">
+                            <div>
+                                <strong>สับปะรดอบแห้ง</strong>
+                                <br><small class="text-muted">DF-PINE-001</small>
+                            </div>
+                            <div class="text-end">
+                                <div>8.7 kg</div>
+                                <span class="stock-level stock-low">สต๊อคต่ำ</span>
+                            </div>
+                        </div>
+                        <div class="inventory-item">
+                            <div>
+                                <strong>กล้วยอบแห้ง</strong>
+                                <br><small class="text-muted">DF-BANANA-001</small>
+                            </div>
+                            <div class="text-end">
+                                <div>15.4 kg</div>
+                                <span class="stock-level stock-medium">สต๊อคปกติ</span>
+                            </div>
+                        </div>
+                        <div class="inventory-item">
+                            <div>
+                                <strong>ลำไยอบแห้ง</strong>
+                                <br><small class="text-muted">DF-LONGAN-001</small>
+                            </div>
+                            <div class="text-end">
+                                <div>12.1 kg</div>
+                                <span class="stock-level stock-medium">สต๊อคปกติ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="fas fa-history me-2"></i>กิจกรรมล่าสุด</h5>
+                    <div id="activityList">
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>รับสินค้าเข้าคลัง</strong>
+                                    <p class="mb-0 text-muted">มะม่วงอบแห้ง 20 kg จากซัพพลายเออร์</p>
+                                </div>
+                                <small class="text-muted">2 ชม.ที่แล้ว</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>ขายสินค้า</strong>
+                                    <p class="mb-0 text-muted">ออเดอร์ #ORD-2024-001245 มูลค่า ฿1,250</p>
+                                </div>
+                                <small class="text-muted">4 ชม.ที่แล้ว</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>แจ้งเตือนสต๊อคต่ำ</strong>
+                                    <p class="mb-0 text-muted">สับปะรดอบแห้ง เหลือ 8.7 kg</p>
+                                </div>
+                                <small class="text-muted">6 ชม.ที่แล้ว</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>อัพเดทข้อมูลผู้จัดการ</strong>
+                                    <p class="mb-0 text-muted">เปลี่ยนเบอร์ติดต่อใหม่</p>
+                                </div>
+                                <small class="text-muted">1 วันที่แล้ว</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="info-card text-center">
+                    <h5 class="mb-3">การจัดการสาขา</h5>
+                    <button class="btn action-button" onclick="viewInventoryDetails()">
+                        <i class="fas fa-boxes me-1"></i>จัดการสต๊อค
+                    </button>
+                    <button class="btn action-button" onclick="viewSalesReport()">
+                        <i class="fas fa-chart-bar me-1"></i>รายงานการขาย
+                    </button>
+                    <button class="btn action-button" onclick="viewDeliverySchedule()">
+                        <i class="fas fa-truck me-1"></i>ตารางจัดส่ง
+                    </button>
+                    <button class="btn action-button" onclick="sendNotification()">
+                        <i class="fas fa-bell me-1"></i>ส่งแจ้งเตือน
+                    </button>
+                    <button class="btn danger-button" onclick="confirmDeactivate()">
+                        <i class="fas fa-power-off me-1"></i>ปิดสาขาชั่วคราว
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let branchData = {};
+        let salesChart;
+        let locationMap;
+        let isEditMode = false;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBranchData();
+            initLocationMap();
+            initSalesChart();
+        });
+
+        // Load branch data from URL parameter or API
+        async function loadBranchData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const branchId = urlParams.get('id') || 'BR-001';
+            
+            try {
+                // In real implementation, fetch from API
+                // const response = await fetch(`/api/branches/${branchId}`);
+                // const data = await response.json();
+                
+                // Mock data for demo
+                branchData = {
+                    id: "BR-001",
+                    name: "สาขาเซ็นทรัลปิ่นเกล้า",
+                    type: "FLAGSHIP",
+                    status: "ACTIVE",
+                    address: "เซ็นทรัลปิ่นเกล้า ชั้น 2 เลขที่ 7/222 ถนนบรมราชชนนี แขวงบางบำหรุ เขตบางพลัด กรุงเทพมหานคร 10700",
+                    phone: "02-884-8888",
+                    email: "pinklao@driedfruits.co.th",
+                    lat: 13.7878,
+                    lng: 100.4832,
+                    manager: "นางสาวกรรณิกา สมใส",
+                    managerPhone: "081-234-5678",
+                    deliveryZone: "ภาคกลาง",
+                    performanceScore: 95,
+                    monthlyRevenue: 850000,
+                    totalOrders: 2450,
+                    avgOrderValue: 347,
+                    customerCount: 1245
+                };
+                
+                displayBranchData();
+                
+                // Show approval buttons for pending branches
+                if (branchData.status === 'PENDING') {
+                    document.getElementById('approveBtn').style.display = 'inline-block';
+                    document.getElementById('rejectBtn').style.display = 'inline-block';
+                }
+                
+            } catch (error) {
+                console.error('Error loading branch data:', error);
+            }
+        }
+
+        // Display branch data
+        function displayBranchData() {
+            document.getElementById('branchName').textContent = branchData.name;
+            document.getElementById('branchAddress').textContent = branchData.address;
+            document.getElementById('branchPhone').textContent = branchData.phone;
+            document.getElementById('branchEmail').textContent = branchData.email;
+            document.getElementById('managerName').textContent = branchData.manager;
+            document.getElementById('managerPhone').textContent = branchData.managerPhone;
+            document.getElementById('branchId').textContent = branchData.id;
+            document.getElementById('deliveryZone').textContent = branchData.deliveryZone;
+            
+            // Status badge
+            const statusElement = document.getElementById('branchStatus');
+            const statusText = branchData.status === 'ACTIVE' ? 'เปิดบริการ' :
+                              branchData.status === 'PENDING' ? 'รออนุมัติ' : 'ปิดชั่วคราว';
+            const statusClass = branchData.status === 'ACTIVE' ? 'status-active' :
+                               branchData.status === 'PENDING' ? 'status-pending' : 'status-inactive';
+            
+            statusElement.textContent = statusText;
+            statusElement.className = `status-badge ${statusClass}`;
+            
+            // Performance score
+            const scoreElement = document.getElementById('performanceScore');
+            scoreElement.textContent = `${branchData.performanceScore}%`;
+            const scoreClass = branchData.performanceScore >= 80 ? 'score-excellent' :
+                              branchData.performanceScore >= 60 ? 'score-good' : 'score-poor';
+            scoreElement.className = `performance-score ${scoreClass}`;
+            
+            // Metrics
+            document.getElementById('monthlyRevenue').textContent = `฿${branchData.monthlyRevenue.toLocaleString()}`;
+            document.getElementById('totalOrders').textContent = branchData.totalOrders.toLocaleString();
+            document.getElementById('avgOrderValue').textContent = `฿${branchData.avgOrderValue}`;
+            document.getElementById('customerCount').textContent = branchData.customerCount.toLocaleString();
+        }
+
+        // Initialize location map
+        function initLocationMap() {
+            locationMap = L.map('branchLocationMap').setView([branchData.lat || 13.7563, branchData.lng || 100.5018], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(locationMap);
+            
+            // Add marker for branch location
+            L.marker([branchData.lat || 13.7563, branchData.lng || 100.5018])
+                .addTo(locationMap)
+                .bindPopup(`<strong>${branchData.name}</strong><br>${branchData.address}`)
+                .openPopup();
+        }
+
+        // Initialize sales chart
+        function initSalesChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.'],
+                    datasets: [{
+                        label: 'ยอดขาย (บาท)',
+                        data: [650000, 720000, 680000, 790000, 820000, 880000, 850000],
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const editForm = document.getElementById('editForm');
+            
+            if (isEditMode) {
+                editForm.classList.add('active');
+                populateEditForm();
+            } else {
+                editForm.classList.remove('active');
+            }
+        }
+
+        // Populate edit form
+        function populateEditForm() {
+            document.getElementById('editBranchName').value = branchData.name;
+            document.getElementById('editBranchStatus').value = branchData.status;
+            document.getElementById('editBranchAddress').value = branchData.address;
+            document.getElementById('editBranchPhone').value = branchData.phone;
+            document.getElementById('editBranchEmail').value = branchData.email;
+            document.getElementById('editManagerName').value = branchData.manager;
+            document.getElementById('editManagerPhone').value = branchData.managerPhone;
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            toggleEditMode();
+        }
+
+        // Save branch edit
+        async function saveBranchEdit() {
+            const updatedData = {
+                name: document.getElementById('editBranchName').value,
+                status: document.getElementById('editBranchStatus').value,
+                address: document.getElementById('editBranchAddress').value,
+                phone: document.getElementById('editBranchPhone').value,
+                email: document.getElementById('editBranchEmail').value,
+                manager: document.getElementById('editManagerName').value,
+                managerPhone: document.getElementById('editManagerPhone').value
+            };
+
+            try {
+                // In real implementation, send PUT request to API
+                // const response = await fetch(`/api/branches/${branchData.id}`, {
+                //     method: 'PUT',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(updatedData)
+                // });
+
+                // Update local data and display
+                Object.assign(branchData, updatedData);
+                displayBranchData();
+                toggleEditMode();
+                
+                alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                
+            } catch (error) {
+                console.error('Error saving branch data:', error);
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            }
+        }
+
+        // Approve branch
+        async function approveBranch() {
+            if (confirm('ยืนยันการอนุมัติสาขานี้?')) {
+                try {
+                    // In real implementation, send approval request
+                    // await fetch(`/api/branches/${branchData.id}/approve`, { method: 'POST' });
+                    
+                    branchData.status = 'ACTIVE';
+                    displayBranchData();
+                    document.getElementById('approveBtn').style.display = 'none';
+                    document.getElementById('rejectBtn').style.display = 'none';
+                    
+                    alert('อนุมัติสาขาเรียบร้อยแล้ว');
+                    
+                } catch (error) {
+                    alert('เกิดข้อผิดพลาดในการอนุมัติ');
+                }
+            }
+        }
+
+        // Reject branch
+        async function rejectBranch() {
+            const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธ:');
+            if (reason) {
+                try {
+                    // In real implementation, send rejection request
+                    // await fetch(`/api/branches/${branchData.id}/reject`, { 
+                    //     method: 'POST',
+                    //     body: JSON.stringify({ reason })
+                    // });
+                    
+                    alert('ปฏิเสธสาขาเรียบร้อยแล้ว');
+                    window.location.href = '/branch-management';
+                    
+                } catch (error) {
+                    alert('เกิดข้อผิดพลาดในการปฏิเสธ');
+                }
+            }
+        }
+
+        // Action functions
+        function viewInventoryDetails() {
+            window.open(`/inventory?branch=${branchData.id}`, '_blank');
+        }
+
+        function viewSalesReport() {
+            window.open(`/reports?branch=${branchData.id}&type=sales`, '_blank');
+        }
+
+        function viewDeliverySchedule() {
+            window.open(`/delivery?branch=${branchData.id}`, '_blank');
+        }
+
+        function sendNotification() {
+            const message = prompt('ข้อความที่ต้องการส่ง:');
+            if (message) {
+                // In real implementation, send notification via Line/Email
+                alert(`ส่งแจ้งเตือนไปยัง ${branchData.manager} เรียบร้อยแล้ว`);
+            }
+        }
+
+        function confirmDeactivate() {
+            if (confirm('ยืนยันการปิดสาขาชั่วคราว?\nสาขาจะไม่สามารถขายหรือรับสินค้าได้')) {
+                // In real implementation, deactivate branch
+                branchData.status = 'INACTIVE';
+                displayBranchData();
+                alert('ปิดสาขาชั่วคราวเรียบร้อยแล้ว');
+            }
+        }
+    </script>
+</body>
+</html>

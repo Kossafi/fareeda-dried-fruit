@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการสาขา - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow-soft);
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .branch-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border-left: 4px solid var(--primary-orange);
+            transition: all 0.3s ease;
+        }
+
+        .branch-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .branch-active {
+            border-left-color: var(--success-green);
+        }
+
+        .branch-inactive {
+            border-left-color: var(--danger-red);
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .search-box {
+            background: white;
+            border: 2px solid var(--primary-orange);
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.2);
+        }
+
+        #branchMap {
+            height: 400px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .filter-badge {
+            background: var(--bg-light-yellow);
+            color: var(--text-brown);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .filter-badge:hover {
+            border-color: var(--primary-orange);
+            background: white;
+        }
+
+        .filter-badge.active {
+            background: var(--primary-orange);
+            color: white;
+            border-color: var(--primary-orange);
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .loading-spinner.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .kpi-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .kpi-high {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .kpi-medium {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .kpi-low {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-store me-2"></i>ระบบจัดการสาขา
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/dashboard">
+                            <i class="fas fa-home me-1"></i>หน้าหลัก
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/branch-approval">
+                            <i class="fas fa-clipboard-check me-1"></i>อนุมัติสาขา
+                            <span class="badge bg-danger ms-1" id="pendingBadge">3</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#" onclick="showAddBranchModal()">
+                            <i class="fas fa-plus-circle me-1"></i>เพิ่มสาขาใหม่
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-success">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <h2 class="mb-0" id="totalBranches">150</h2>
+                    <p class="text-muted mb-0">สาขาทั้งหมด</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-primary">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 class="mb-0" id="activeBranches">147</h2>
+                    <p class="text-muted mb-0">สาขาที่เปิดบริการ</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h2 class="mb-0" id="pendingBranches">2</h2>
+                    <p class="text-muted mb-0">รออนุมัติ</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h2 class="mb-0" id="inactiveBranches">1</h2>
+                    <p class="text-muted mb-0">ปิดชั่วคราว</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control search-box" placeholder="ค้นหาสาขา... (ชื่อ, รหัส, พื้นที่)" id="searchBranch">
+                    <button class="btn btn-primary ms-2" onclick="searchBranches()">
+                        <i class="fas fa-search"></i> ค้นหา
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">กรอง:</span>
+                    <span class="filter-badge active" onclick="filterBranches('all')">ทั้งหมด</span>
+                    <span class="filter-badge" onclick="filterBranches('active')">เปิดบริการ</span>
+                    <span class="filter-badge" onclick="filterBranches('pending')">รออนุมัติ</span>
+                    <span class="filter-badge" onclick="filterBranches('inactive')">ปิดชั่วคราว</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map and Branch List -->
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <h4 class="mb-3"><i class="fas fa-map-marked-alt me-2"></i>แผนที่สาขา</h4>
+                <div id="branchMap"></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <h4 class="mb-3"><i class="fas fa-list me-2"></i>รายการสาขา</h4>
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="branchList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Branch cards will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Branch Modal -->
+    <div class="modal fade" id="addBranchModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-warning bg-gradient">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>เพิ่มสาขาใหม่
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe src="/add-branch" width="100%" height="600" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let branches = [];
+        let markers = [];
+
+        // Initialize map
+        function initMap() {
+            map = L.map('branchMap').setView([13.7563, 100.5018], 6); // Thailand center
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            loadBranches();
+        }
+
+        // Load branches from API
+        async function loadBranches() {
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            try {
+                const response = await fetch('/api/branches');
+                const data = await response.json();
+                
+                if (data.success) {
+                    branches = data.data;
+                    displayBranches(branches);
+                    updateMapMarkers(branches);
+                    updateStatistics();
+                }
+            } catch (error) {
+                console.error('Error loading branches:', error);
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Display branches in list
+        function displayBranches(branchesToShow) {
+            const branchList = document.getElementById('branchList');
+            branchList.innerHTML = '';
+
+            branchesToShow.forEach(branch => {
+                const statusClass = branch.status === 'ACTIVE' ? 'branch-active' : 
+                                   branch.status === 'INACTIVE' ? 'branch-inactive' : '';
+                
+                const statusText = branch.status === 'ACTIVE' ? 'เปิดบริการ' :
+                                  branch.status === 'PENDING' ? 'รออนุมัติ' : 'ปิดชั่วคราว';
+                
+                const statusColor = branch.status === 'ACTIVE' ? 'text-success' :
+                                   branch.status === 'PENDING' ? 'text-warning' : 'text-danger';
+
+                const kpiClass = branch.performanceScore >= 80 ? 'kpi-high' :
+                                branch.performanceScore >= 60 ? 'kpi-medium' : 'kpi-low';
+
+                const branchCard = `
+                    <div class="branch-card ${statusClass}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">${branch.name}</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>${branch.address}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-user me-1"></i>ผู้จัดการ: ${branch.manager}
+                                    <br>
+                                    <i class="fas fa-phone me-1"></i>${branch.phone}
+                                </p>
+                                <div>
+                                    <span class="badge ${statusColor}">${statusText}</span>
+                                    <span class="kpi-badge ${kpiClass} ms-2">
+                                        Performance: ${branch.performanceScore}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <p class="text-muted mb-1">รหัสสาขา</p>
+                                <h6 class="text-primary">${branch.id}</h6>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="viewBranchDetails('${branch.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning mt-2" onclick="editBranch('${branch.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                branchList.innerHTML += branchCard;
+            });
+        }
+
+        // Update map markers
+        function updateMapMarkers(branchesToShow) {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Add new markers
+            branchesToShow.forEach(branch => {
+                if (branch.lat && branch.lng) {
+                    const iconColor = branch.status === 'ACTIVE' ? 'green' :
+                                     branch.status === 'PENDING' ? 'orange' : 'red';
+                    
+                    const marker = L.marker([branch.lat, branch.lng])
+                        .addTo(map)
+                        .bindPopup(`
+                            <strong>${branch.name}</strong><br>
+                            ${branch.address}<br>
+                            <small>Manager: ${branch.manager}</small>
+                        `);
+                    
+                    markers.push(marker);
+                }
+            });
+
+            // Fit map to show all markers
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Filter branches
+        function filterBranches(filterType) {
+            // Update active filter badge
+            document.querySelectorAll('.filter-badge').forEach(badge => {
+                badge.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter branches
+            let filtered = branches;
+            if (filterType !== 'all') {
+                filtered = branches.filter(branch => 
+                    filterType === 'active' ? branch.status === 'ACTIVE' :
+                    filterType === 'pending' ? branch.status === 'PENDING' :
+                    filterType === 'inactive' ? branch.status === 'INACTIVE' : true
+                );
+            }
+
+            displayBranches(filtered);
+            updateMapMarkers(filtered);
+        }
+
+        // Search branches
+        function searchBranches() {
+            const searchTerm = document.getElementById('searchBranch').value.toLowerCase();
+            
+            const filtered = branches.filter(branch => 
+                branch.name.toLowerCase().includes(searchTerm) ||
+                branch.id.toLowerCase().includes(searchTerm) ||
+                branch.address.toLowerCase().includes(searchTerm) ||
+                branch.manager.toLowerCase().includes(searchTerm)
+            );
+
+            displayBranches(filtered);
+            updateMapMarkers(filtered);
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = branches.length;
+            const active = branches.filter(b => b.status === 'ACTIVE').length;
+            const pending = branches.filter(b => b.status === 'PENDING').length;
+            const inactive = branches.filter(b => b.status === 'INACTIVE').length;
+
+            document.getElementById('totalBranches').textContent = total;
+            document.getElementById('activeBranches').textContent = active;
+            document.getElementById('pendingBranches').textContent = pending;
+            document.getElementById('inactiveBranches').textContent = inactive;
+        }
+
+        // View branch details
+        function viewBranchDetails(branchId) {
+            window.open(`/branch-details?id=${branchId}`, '_blank');
+        }
+
+        // Edit branch
+        function editBranch(branchId) {
+            window.open(`/branch-details?id=${branchId}&edit=true`, '_blank');
+        }
+
+        // Show add branch modal
+        function showAddBranchModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addBranchModal'));
+            modal.show();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadBranches, 30000);
+        });
+
+        // Handle search on enter key
+        document.getElementById('searchBranch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBranches();
+            }
+        });
+    </script>
+</body>
+</html>

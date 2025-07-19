@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการสินค้าผลไม้แห้ง | Dried Fruits Inventory System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px var(--shadow-warm);
+            padding: 1rem 0;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px var(--shadow-warm);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-deep-orange);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-label {
+            color: var(--text-brown);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-online {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, var(--text-brown) 0%, var(--text-dark) 100%);
+            color: var(--bg-warm-white);
+            padding: 40px 0;
+            margin-top: 80px;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .fruit-emoji {
+            font-size: 1.5rem;
+            margin: 0 5px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .feature-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-leaf text-success"></i>
+                ระบบผลไม้แห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs">📚 API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/health">💚 Health Check</a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-primary btn-sm" onclick="showLoginModal()">
+                            <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h1 class="hero-title">
+                        <span class="fruit-emoji">🥭</span>
+                        ระบบจัดการสินค้าผลไม้แห้ง
+                        <span class="fruit-emoji">🍌</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Dried Fruits Inventory Management System
+                        <br>
+                        ระบบจัดการสต็อก การขาย และการจัดส่งผลไม้แห้งแบบครบวงจร
+                    </p>
+                    <div class="mb-4">
+                        <span class="status-badge status-online">
+                            <i class="fas fa-circle"></i> ระบบทำงานปกติ
+                        </span>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="loadDashboard()">
+                        <i class="fas fa-chart-line"></i> เข้าสู่แดชบอร์ด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="container mb-5">
+        <div class="row" id="statsRow">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number" id="productCount">-</div>
+                    <div class="stats-label">ชนิดสินค้า</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number" id="userCount">-</div>
+                    <div class="stats-label">ผู้ใช้งาน</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">100%</div>
+                    <div class="stats-label">ระบบพร้อมใช้</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">v1.0</div>
+                    <div class="stats-label">เวอร์ชัน</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container">
+        <div class="row">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h3 class="feature-title">จัดการสินค้า</h3>
+                    <p class="feature-description">
+                        ระบบจัดการสต็อกสินค้าผลไม้แห้งแบบครบวงจร พร้อมระบบแจ้งเตือนสินค้าใกล้หมด
+                    </p>
+                    <button class="btn btn-outline-primary" onclick="loadProducts()">
+                        <i class="fas fa-eye"></i> ดูสินค้า
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">จัดการผู้ใช้</h3>
+                    <p class="feature-description">
+                        ระบบจัดการผู้ใช้งานตามบทบาท (Admin, Manager, Sales, Inventory, Delivery)
+                    </p>
+                    <button class="btn btn-outline-primary" onclick="loadUsers()">
+                        <i class="fas fa-eye"></i> ดูผู้ใช้
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="feature-title">รายงานและวิเคราะห์</h3>
+                    <p class="feature-description">
+                        ระบบรายงานการขาย การจัดส่ง และการวิเคราะห์ข้อมูลแบบ Real-time
+                    </p>
+                    <button class="btn btn-outline-primary" onclick="alert('Coming Soon! 🚧')">
+                        <i class="fas fa-eye"></i> ดูรายงาน
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">กำลังโหลดข้อมูล...</p>
+    </div>
+
+    <!-- Content Display Area -->
+    <div class="container mt-5" id="contentArea" style="display: none;">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0" id="contentTitle">ข้อมูล</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="contentBody">
+                            <!-- Dynamic content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">เข้าสู่ระบบ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">ชื่อผู้ใช้</label>
+                            <input type="text" class="form-control" id="username" value="admin" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">รหัสผ่าน</label>
+                            <input type="password" class="form-control" id="password" value="admin123" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">เข้าสู่ระบบ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>ระบบจัดการสินค้าผลไม้แห้ง</h5>
+                    <p>ระบบจัดการสต็อก การขาย และการจัดส่งผลไม้แห้งแบบครบวงจร</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>
+                        <i class="fas fa-code"></i> Built with FastAPI + Python
+                        <br>
+                        <i class="fas fa-database"></i> Powered by SQLAlchemy
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+        });
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const [productsResponse, usersResponse] = await Promise.all([
+                    fetch('/products'),
+                    fetch('/users')
+                ]);
+
+                const productsData = await productsResponse.json();
+                const usersData = await usersResponse.json();
+
+                document.getElementById('productCount').textContent = productsData.total;
+                document.getElementById('userCount').textContent = usersData.total;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Show loading spinner
+        function showLoading() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('contentArea').style.display = 'none';
+        }
+
+        // Hide loading spinner
+        function hideLoading() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+
+        // Show content area
+        function showContent(title, content) {
+            document.getElementById('contentTitle').textContent = title;
+            document.getElementById('contentBody').innerHTML = content;
+            document.getElementById('contentArea').style.display = 'block';
+            document.getElementById('contentArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load products
+        async function loadProducts() {
+            showLoading();
+            try {
+                const response = await fetch('/products');
+                const data = await response.json();
+                
+                let html = `
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>รายการสินค้าผลไม้แห้ง (${data.total} รายการ)</h6>
+                        </div>
+                    </div>
+                    <div class="row">
+                `;
+                
+                data.products.forEach(product => {
+                    html += `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">${product.name}</h6>
+                                    <p class="card-text text-muted small">${product.name_en}</p>
+                                    <p class="card-text">
+                                        <span class="badge bg-primary">${product.sku}</span>
+                                        <span class="badge bg-success">฿${product.price}</span>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            หมวด: ${product.category} | หน่วย: ${product.unit}
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                
+                hideLoading();
+                showContent('📦 รายการสินค้า', html);
+            } catch (error) {
+                hideLoading();
+                showContent('❌ เกิดข้อผิดพลาด', '<p>ไม่สามารถโหลดข้อมูลสินค้าได้</p>');
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            showLoading();
+            try {
+                const response = await fetch('/users');
+                const data = await response.json();
+                
+                let html = `
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>รายการผู้ใช้งาน (${data.total} คน)</h6>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อผู้ใช้</th>
+                                    <th>ชื่อเต็ม</th>
+                                    <th>บทบาท</th>
+                                    <th>สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.users.forEach(user => {
+                    const statusBadge = user.is_active ? 
+                        '<span class="badge bg-success">ใช้งาน</span>' : 
+                        '<span class="badge bg-danger">ไม่ใช้งาน</span>';
+                    
+                    html += `
+                        <tr>
+                            <td>@${user.username}</td>
+                            <td>${user.full_name}</td>
+                            <td><span class="badge bg-info">${user.role}</span></td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+                
+                hideLoading();
+                showContent('👥 รายการผู้ใช้', html);
+            } catch (error) {
+                hideLoading();
+                showContent('❌ เกิดข้อผิดพลาด', '<p>ไม่สามารถโหลดข้อมูลผู้ใช้ได้</p>');
+            }
+        }
+
+        // Load dashboard
+        function loadDashboard() {
+            window.open('/dashboard', '_blank');
+        }
+
+        // Show login modal
+        function showLoginModal() {
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        }
+
+        // Handle login form
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert(`เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ${data.user.full_name} (${data.user.role})`);
+                    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                    
+                    // Store token for future requests
+                    localStorage.setItem('access_token', data.access_token);
+                } else {
+                    alert('เข้าสู่ระบบไม่สำเร็จ: ' + data.detail);
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message);
+                console.error('Login error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

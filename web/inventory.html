@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการสต๊อค - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+        }
+        .product-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left-color: #FFA500;
+        }
+        .low-stock {
+            border-left-color: #EF4444;
+            background: linear-gradient(135deg, #fff 0%, #fef2f2 100%);
+        }
+        .normal-stock {
+            border-left-color: #10B981;
+            background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
+        }
+        .modal {
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-yellow-200">
+                        <i class="fas fa-home text-xl"></i>
+                    </a>
+                    <h1 class="text-white text-xl font-bold">จัดการสต๊อค</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="openAddProductModal()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-plus mr-2"></i>เพิ่มสินค้า
+                    </button>
+                    <button onclick="openRepackModal()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-box-open mr-2"></i>รีแพ็ค
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search and Filter -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ค้นหาสินค้า</label>
+                    <input type="text" id="searchInput" placeholder="ชื่อสินค้า, SKU, บาร์โค้ด" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่</label>
+                    <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">ทั้งหมด</option>
+                        <option value="DRIED_FRUIT">ผลไม้อบแห้ง</option>
+                        <option value="NUTS">ถั่วและเมล็ด</option>
+                        <option value="MIXED">ผลไม้รวม</option>
+                        <option value="GIFT_BASKET">กระเช้าของขวัญ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">สถานะสต๊อค</label>
+                    <select id="stockFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">ทั้งหมด</option>
+                        <option value="low">สต๊อคต่ำ</option>
+                        <option value="normal">สต๊อคปกติ</option>
+                        <option value="high">สต๊อคเยอะ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+                    <select id="locationFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">ทั้งหมด</option>
+                        <option value="warehouse">คลังสินค้าหลัก</option>
+                        <option value="central-ladprao">เซ็นทรัลลาดพร้าว</option>
+                        <option value="siam-paragon">สยามพารากอน</option>
+                        <option value="emquartier">เอ็มควอเทียร์</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="inventoryGrid">
+            <!-- Product Card 1 -->
+            <div class="product-card bg-white rounded-xl shadow-lg p-6 low-stock">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-1">มะม่วงอบแห้ง</h3>
+                        <p class="text-sm text-gray-600">SKU: DF-MANGO-001</p>
+                        <p class="text-xs text-gray-500">บาร์โค้ด: 8851234567890</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">สต๊อคต่ำ</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">คลังหลัก:</span>
+                        <span class="font-medium text-red-600">5.2 กิโล</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">จุดสั่งซื้อ:</span>
+                        <span class="font-medium">10 กิโล</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-red-500 h-2 rounded-full" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿180</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/ขีด</div>
+                    </div>
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿2,400</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/กิโล</div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="adjustStock('DF-MANGO-001', 'add')" class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-green-600 transition">
+                        <i class="fas fa-plus mr-1"></i>เพิ่ม
+                    </button>
+                    <button onclick="adjustStock('DF-MANGO-001', 'remove')" class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-600 transition">
+                        <i class="fas fa-minus mr-1"></i>ลด
+                    </button>
+                    <button onclick="viewProduct('DF-MANGO-001')" class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-orange-600 transition">
+                        <i class="fas fa-eye mr-1"></i>ดู
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Card 2 -->
+            <div class="product-card bg-white rounded-xl shadow-lg p-6 normal-stock">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-1">สับปะรดอบแห้ง</h3>
+                        <p class="text-sm text-gray-600">SKU: DF-PINE-001</p>
+                        <p class="text-xs text-gray-500">บาร์โค้ด: 8851234567891</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">สต๊อคปกติ</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">คลังหลัก:</span>
+                        <span class="font-medium text-green-600">25.8 กิโล</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">จุดสั่งซื้อ:</span>
+                        <span class="font-medium">15 กิโล</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿160</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/ขีด</div>
+                    </div>
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿2,100</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/กิโล</div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="adjustStock('DF-PINE-001', 'add')" class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-green-600 transition">
+                        <i class="fas fa-plus mr-1"></i>เพิ่ม
+                    </button>
+                    <button onclick="adjustStock('DF-PINE-001', 'remove')" class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-600 transition">
+                        <i class="fas fa-minus mr-1"></i>ลด
+                    </button>
+                    <button onclick="viewProduct('DF-PINE-001')" class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-orange-600 transition">
+                        <i class="fas fa-eye mr-1"></i>ดู
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Card 3 -->
+            <div class="product-card bg-white rounded-xl shadow-lg p-6 normal-stock">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-1">กล้วยอบแห้ง</h3>
+                        <p class="text-sm text-gray-600">SKU: DF-BANANA-001</p>
+                        <p class="text-xs text-gray-500">บาร์โค้ด: 8851234567892</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">สต๊อคปกติ</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">คลังหลัก:</span>
+                        <span class="font-medium text-green-600">18.5 กิโล</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">จุดสั่งซื้อ:</span>
+                        <span class="font-medium">12 กิโล</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 65%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿150</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/ขีด</div>
+                    </div>
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿2,000</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/กิโล</div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="adjustStock('DF-BANANA-001', 'add')" class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-green-600 transition">
+                        <i class="fas fa-plus mr-1"></i>เพิ่ม
+                    </button>
+                    <button onclick="adjustStock('DF-BANANA-001', 'remove')" class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-600 transition">
+                        <i class="fas fa-minus mr-1"></i>ลด
+                    </button>
+                    <button onclick="viewProduct('DF-BANANA-001')" class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-orange-600 transition">
+                        <i class="fas fa-eye mr-1"></i>ดู
+                    </button>
+                </div>
+            </div>
+
+            <!-- Composite Product Card -->
+            <div class="product-card bg-white rounded-xl shadow-lg p-6 normal-stock">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-1">ผลไม้รวม Premium</h3>
+                        <p class="text-sm text-gray-600">SKU: DF-MIX-PREMIUM</p>
+                        <p class="text-xs text-gray-500">บาร์โค้ด: 8851234567893</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">รีแพ็ค</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="text-xs text-gray-600 mb-2">ส่วนประกอบ:</div>
+                    <div class="text-xs space-y-1">
+                        <div class="flex justify-between">
+                            <span>มะม่วงอบแห้ง</span>
+                            <span>40%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>สับปะรดอบแห้ง</span>
+                            <span>35%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>กล้วยอบแห้ง</span>
+                            <span>25%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">สามารถผลิตได้:</span>
+                        <span class="font-medium text-blue-600">8.5 กิโล</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿220</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/ขีด</div>
+                    </div>
+                    <div class="text-center p-2 bg-gray-50 rounded">
+                        <div class="text-lg font-bold text-gray-800">฿2,800</div>
+                        <div class="text-xs text-gray-600">ราคาขาย/กิโล</div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="repackProduct('DF-MIX-PREMIUM')" class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-blue-600 transition">
+                        <i class="fas fa-box-open mr-1"></i>รีแพ็ค
+                    </button>
+                    <button onclick="viewProduct('DF-MIX-PREMIUM')" class="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-orange-600 transition">
+                        <i class="fas fa-eye mr-1"></i>ดู
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">เพิ่มสินค้าใหม่</h2>
+                <button onclick="closeAddProductModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="addProductForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อสินค้า</label>
+                        <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
+                        <input type="text" name="sku" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่</label>
+                        <select name="category" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            <option value="">เลือกหมวดหมู่</option>
+                            <option value="DRIED_FRUIT">ผลไม้อบแห้ง</option>
+                            <option value="NUTS">ถั่วและเมล็ด</option>
+                            <option value="MIXED">ผลไม้รวม</option>
+                            <option value="GIFT_BASKET">กระเช้าของขวัญ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หน่วยพื้นฐาน</label>
+                        <select name="baseUnit" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            <option value="kg">กิโลกรัม</option>
+                            <option value="g">กรัม</option>
+                            <option value="piece">ชิ้น</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ราคาต้นทุน</label>
+                        <input type="number" name="costPrice" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ราคาขาย</label>
+                        <input type="number" name="sellingPrice" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">จุดสั่งซื้อ</label>
+                        <input type="number" name="reorderPoint" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนสั่งซื้อ</label>
+                        <input type="number" name="reorderQuantity" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closeAddProductModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                        เพิ่มสินค้า
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Repack Modal -->
+    <div id="repackModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-3xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">รีแพ็คสินค้า</h2>
+                <button onclick="closeRepackModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Available Products -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">สินค้าที่มีในสต๊อค</h3>
+                    <div class="space-y-3" id="availableProducts">
+                        <div class="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                                <div class="font-medium">มะม่วงอบแห้ง</div>
+                                <div class="text-sm text-gray-600">มีอยู่ 5.2 กิโล</div>
+                            </div>
+                            <button onclick="addToRepack('mango')" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">
+                                เพิ่ม
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                                <div class="font-medium">สับปะรดอบแห้ง</div>
+                                <div class="text-sm text-gray-600">มีอยู่ 25.8 กิโล</div>
+                            </div>
+                            <button onclick="addToRepack('pineapple')" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">
+                                เพิ่ม
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                                <div class="font-medium">กล้วยอบแห้ง</div>
+                                <div class="text-sm text-gray-600">มีอยู่ 18.5 กิโล</div>
+                            </div>
+                            <button onclick="addToRepack('banana')" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">
+                                เพิ่ม
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repack Formula -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">สูตรรีแพ็ค</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อสินค้าใหม่</label>
+                            <input type="text" id="repackName" placeholder="เช่น ผลไม้รวม Premium" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        
+                        <div id="repackComponents" class="space-y-2">
+                            <!-- Components will be added here -->
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>จำนวนรวม:</span>
+                                <span id="totalQuantity">0 กิโล</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>ต้นทุนรวม:</span>
+                                <span id="totalCost">฿0</span>
+                            </div>
+                            <div class="flex justify-between font-bold">
+                                <span>ราคาขายแนะนำ:</span>
+                                <span id="suggestedPrice">฿0</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="processRepack()" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-medium">
+                            <i class="fas fa-box-open mr-2"></i>
+                            ดำเนินการรีแพ็ค
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // Initialize WebSocket
+        const socket = io();
+        
+        socket.on('connect', () => {
+            console.log('Connected to inventory system');
+            socket.emit('join-room', 'inventory');
+        });
+
+        // Real-time stock updates
+        socket.on('stock-update', (data) => {
+            updateProductCard(data.productId, data.newQuantity, data.unit);
+        });
+
+        // Modal functions
+        function openAddProductModal() {
+            document.getElementById('addProductModal').classList.add('active');
+        }
+
+        function closeAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('active');
+        }
+
+        function openRepackModal() {
+            document.getElementById('repackModal').classList.add('active');
+        }
+
+        function closeRepackModal() {
+            document.getElementById('repackModal').classList.remove('active');
+        }
+
+        // Stock adjustment functions
+        function adjustStock(productId, action) {
+            const quantity = prompt(`กรุณาระบุจำนวนที่ต้องการ${action === 'add' ? 'เพิ่ม' : 'ลด'}:`);
+            if (quantity && !isNaN(quantity)) {
+                // Send to API
+                fetch('/api/inventory/adjust-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: productId,
+                        action: action,
+                        quantity: parseFloat(quantity),
+                        unit: 'kg',
+                        reason: action === 'add' ? 'Manual addition' : 'Manual reduction'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('ปรับปรุงสต๊อคเรียบร้อยแล้ว');
+                        // Update UI will be handled by WebSocket
+                    } else {
+                        alert('เกิดข้อผิดพลาด: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                });
+            }
+        }
+
+        function viewProduct(productId) {
+            // Redirect to product detail page or open modal
+            alert('ดูรายละเอียดสินค้า: ' + productId);
+        }
+
+        // Repack functions
+        let repackComponents = [];
+
+        function addToRepack(productType) {
+            const quantity = prompt('กรุณาระบุจำนวน (กิโล):');
+            if (quantity && !isNaN(quantity)) {
+                const products = {
+                    'mango': { name: 'มะม่วงอบแห้ง', cost: 1800 },
+                    'pineapple': { name: 'สับปะรดอบแห้ง', cost: 1500 },
+                    'banana': { name: 'กล้วยอบแห้ง', cost: 1400 }
+                };
+                
+                const product = products[productType];
+                repackComponents.push({
+                    type: productType,
+                    name: product.name,
+                    quantity: parseFloat(quantity),
+                    cost: product.cost
+                });
+                
+                updateRepackDisplay();
+            }
+        }
+
+        function updateRepackDisplay() {
+            const container = document.getElementById('repackComponents');
+            container.innerHTML = '';
+            
+            let totalQuantity = 0;
+            let totalCost = 0;
+            
+            repackComponents.forEach((component, index) => {
+                totalQuantity += component.quantity;
+                totalCost += component.quantity * component.cost;
+                
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-medium">${component.name}</span>
+                        <span class="text-sm text-gray-600 ml-2">${component.quantity} กิโล</span>
+                    </div>
+                    <button onclick="removeFromRepack(${index})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('totalQuantity').textContent = totalQuantity.toFixed(1) + ' กิโล';
+            document.getElementById('totalCost').textContent = '฿' + totalCost.toLocaleString();
+            document.getElementById('suggestedPrice').textContent = '฿' + Math.round(totalCost * 1.4).toLocaleString();
+        }
+
+        function removeFromRepack(index) {
+            repackComponents.splice(index, 1);
+            updateRepackDisplay();
+        }
+
+        function processRepack() {
+            const name = document.getElementById('repackName').value;
+            if (!name || repackComponents.length === 0) {
+                alert('กรุณาระบุชื่อสินค้าและเลือกส่วนประกอบ');
+                return;
+            }
+            
+            // Send repack request to API
+            fetch('/api/inventory/repack', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    components: repackComponents
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('รีแพ็คสินค้าเรียบร้อยแล้ว');
+                    closeRepackModal();
+                    repackComponents = [];
+                    updateRepackDisplay();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+        }
+
+        // Search and filter functions
+        document.getElementById('searchInput').addEventListener('input', filterProducts);
+        document.getElementById('categoryFilter').addEventListener('change', filterProducts);
+        document.getElementById('stockFilter').addEventListener('change', filterProducts);
+        document.getElementById('locationFilter').addEventListener('change', filterProducts);
+
+        function filterProducts() {
+            // Implementation for filtering products
+            console.log('Filtering products...');
+        }
+
+        // Add product form submission
+        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const productData = Object.fromEntries(formData.entries());
+            
+            fetch('/api/inventory/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('เพิ่มสินค้าเรียบร้อยแล้ว');
+                    closeAddProductModal();
+                    e.target.reset();
+                    // Refresh product list
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+        });
+
+        // Update product card with new stock level
+        function updateProductCard(productId, newQuantity, unit) {
+            // Find and update the product card
+            console.log(`Updating ${productId} to ${newQuantity} ${unit}`);
+        }
+    </script>
+</body>
+</html>

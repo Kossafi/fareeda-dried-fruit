@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เส้นทางจัดส่งสาขา - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .route-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        #routeMap {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border-left: 4px solid var(--primary-orange);
+            transition: all 0.3s ease;
+        }
+
+        .route-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .route-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-active {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .status-planned {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .status-delayed {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .branch-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .branch-item {
+            background: var(--bg-light-yellow);
+            padding: 0.75rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .branch-item:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-soft);
+        }
+
+        .branch-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary-orange);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .distance-badge {
+            background: var(--primary-orange);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-brown);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .zone-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .zone-btn {
+            background: transparent;
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .zone-btn.active,
+        .zone-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .route-optimization {
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.1) 0%, rgba(50, 205, 50, 0.05) 100%);
+            border: 2px solid var(--success-green);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .delivery-timeline {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-time {
+            width: 80px;
+            font-weight: 600;
+            color: var(--primary-orange);
+        }
+
+        .timeline-content {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .timeline-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .vehicle-info {
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .leaflet-popup-content {
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .route-line {
+            stroke: #FF8C00;
+            stroke-width: 4;
+            stroke-opacity: 0.8;
+        }
+
+        .optimized-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: var(--success-green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .efficiency-score {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success-green) 0deg 288deg, #e0e0e0 288deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            position: relative;
+        }
+
+        .score-circle::after {
+            content: '';
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+
+        .score-text {
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            color: var(--success-green);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/branch-management">
+                <i class="fas fa-arrow-left me-2"></i>เส้นทางจัดส่งสาขา
+            </a>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light me-2" onclick="optimizeAllRoutes()">
+                    <i class="fas fa-route me-1"></i>ปรับปรุงเส้นทาง
+                </button>
+                <button class="btn btn-outline-light" onclick="refreshRoutes()">
+                    <i class="fas fa-sync-alt me-1"></i>รีเฟรช
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-3">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value text-primary" id="totalRoutes">6</div>
+                <div class="stat-label">เส้นทางทั้งหมด</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-success" id="activeBranches">147</div>
+                <div class="stat-label">สาขาในระบบ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-warning" id="avgDeliveryTime">4.2</div>
+                <div class="stat-label">ชั่วโมง (เฉลี่ย)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-info" id="totalDistance">2,847</div>
+                <div class="stat-label">กม./วัน</div>
+            </div>
+        </div>
+
+        <!-- Route Optimization Panel -->
+        <div class="route-optimization">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-2">
+                        <i class="fas fa-brain me-2"></i>AI Route Optimization
+                        <span class="optimized-indicator">
+                            <i class="fas fa-check me-1"></i>เปิดใช้งาน
+                        </span>
+                    </h5>
+                    <p class="mb-0 text-muted">
+                        ระบบ AI ปรับปรุงเส้นทางอัตโนมัติทุกวัน เพื่อลดระยะทาง ประหยัดเวลา และลดต้นทุนเชื้อเพลิง
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <div class="efficiency-score">
+                        <div class="score-circle">
+                            <div class="score-text">92%</div>
+                        </div>
+                        <small class="text-muted">ประสิทธิภาพรวม</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone Selector -->
+        <div class="zone-selector">
+            <button class="zone-btn active" onclick="showZone('all')">ทั้งหมด</button>
+            <button class="zone-btn" onclick="showZone('ZONE_CENTRAL')">ภาคกลาง</button>
+            <button class="zone-btn" onclick="showZone('ZONE_NORTH')">ภาคเหนือ</button>
+            <button class="zone-btn" onclick="showZone('ZONE_NORTHEAST')">ภาคอีสาน</button>
+            <button class="zone-btn" onclick="showZone('ZONE_SOUTH')">ภาคใต้</button>
+            <button class="zone-btn" onclick="showZone('ZONE_EAST')">ภาคตะวันออก</button>
+            <button class="zone-btn" onclick="showZone('ZONE_WEST')">ภาคตะวันตก</button>
+        </div>
+
+        <!-- Route Map -->
+        <div class="route-container">
+            <div id="routeMap"></div>
+        </div>
+
+        <!-- Route Cards -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div id="routesList">
+                    <!-- Route cards will be dynamically loaded here -->
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <!-- Delivery Timeline -->
+                <div class="delivery-timeline">
+                    <h5 class="mb-3">
+                        <i class="fas fa-clock me-2"></i>ตารางจัดส่งวันนี้
+                    </h5>
+                    <div id="deliverySchedule">
+                        <div class="timeline-item">
+                            <div class="timeline-time">06:00</div>
+                            <div class="timeline-content">
+                                <strong>เส้นทางภาคกลาง A</strong>
+                                <div class="text-muted">กรุงเทพฯ - นนทบุรี - ปทุมธานี</div>
+                            </div>
+                            <span class="timeline-status bg-success text-white">เสร็จแล้ว</span>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">08:30</div>
+                            <div class="timeline-content">
+                                <strong>เส้นทางภาคกลาง B</strong>
+                                <div class="text-muted">สมุทรปราการ - สมุทรสาคร</div>
+                            </div>
+                            <span class="timeline-status bg-warning text-white">กำลังจัดส่ง</span>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">10:00</div>
+                            <div class="timeline-content">
+                                <strong>เส้นทางภาคเหนือ</strong>
+                                <div class="text-muted">เชียงใหม่ - ลำปาง - แพร่</div>
+                            </div>
+                            <span class="timeline-status bg-info text-white">เตรียมพร้อม</span>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">14:00</div>
+                            <div class="timeline-content">
+                                <strong>เส้นทางภาคอีสาน</strong>
+                                <div class="text-muted">ขอนแก่น - อุดรธานี - หนองคาย</div>
+                            </div>
+                            <span class="timeline-status bg-secondary text-white">รอจัดส่ง</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let routeMap;
+        let routes = [];
+        let currentZone = 'all';
+        let routeMarkers = [];
+        let routeLines = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initRouteMap();
+            loadDeliveryRoutes();
+        });
+
+        // Initialize route map
+        function initRouteMap() {
+            routeMap = L.map('routeMap').setView([13.7563, 100.5018], 6);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(routeMap);
+
+            // Add warehouse marker (main distribution center)
+            const warehouseMarker = L.marker([13.7563, 100.5018], {
+                icon: L.divIcon({
+                    className: 'warehouse-marker',
+                    html: '<div style="background: #FF6B6B; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-warehouse"></i></div>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                })
+            }).addTo(routeMap);
+
+            warehouseMarker.bindPopup(`
+                <strong>🏭 คลังสินค้าหลัก</strong><br>
+                ศูนย์กระจายสินค้า<br>
+                กรุงเทพมหานคร
+            `);
+        }
+
+        // Load delivery routes
+        async function loadDeliveryRoutes() {
+            try {
+                // In real implementation, fetch from API
+                // const response = await fetch('/api/delivery/routes');
+                // const data = await response.json();
+
+                // Mock data for demo
+                routes = [
+                    {
+                        id: 'route-central-a',
+                        name: 'เส้นทางภาคกลาง A',
+                        zone: 'ZONE_CENTRAL',
+                        status: 'active',
+                        vehicle: 'รถบรรทุก 6 ล้อ (BKK-001)',
+                        driver: 'สมชาย ใจดี',
+                        branches: [
+                            { id: 'BR-001', name: 'เซ็นทรัลปิ่นเกล้า', lat: 13.7878, lng: 100.4832, order: 1, distance: 15.2 },
+                            { id: 'BR-002', name: 'เซียร์รังสิต', lat: 14.0307, lng: 100.6078, order: 2, distance: 28.5 },
+                            { id: 'BR-008', name: 'เมกาบางนา', lat: 13.6676, lng: 100.6155, order: 3, distance: 22.8 }
+                        ],
+                        totalDistance: 66.5,
+                        estimatedTime: 4.5,
+                        optimizationScore: 94,
+                        lastOptimized: '2024-07-18T05:30:00Z'
+                    },
+                    {
+                        id: 'route-north-a',
+                        name: 'เส้นทางภาคเหนือ',
+                        zone: 'ZONE_NORTH',
+                        status: 'planned',
+                        vehicle: 'รถบรรทุก 10 ล้อ (CNX-001)',
+                        driver: 'อานนท์ ภูเขียว',
+                        branches: [
+                            { id: 'BR-003', name: 'เชียงใหม่ นิมมาน', lat: 18.8000, lng: 98.9650, order: 1, distance: 695.2 },
+                            { id: 'BR-009', name: 'ลำปาง กาดกองต้า', lat: 18.2888, lng: 99.4919, order: 2, distance: 102.4 },
+                            { id: 'BR-010', name: 'แพร่ วิน', lat: 18.1459, lng: 100.1201, order: 3, distance: 78.9 }
+                        ],
+                        totalDistance: 876.5,
+                        estimatedTime: 12.5,
+                        optimizationScore: 89,
+                        lastOptimized: '2024-07-18T05:30:00Z'
+                    },
+                    {
+                        id: 'route-south-a',
+                        name: 'เส้นทางภาคใต้ A',
+                        zone: 'ZONE_SOUTH',
+                        status: 'active',
+                        vehicle: 'รถบรรทุก 6 ล้อ (PKT-001)',
+                        driver: 'ประเสริฐ ทะเลใส',
+                        branches: [
+                            { id: 'BR-004', name: 'ภูเก็ต ป่าตอง', lat: 7.8964, lng: 98.2964, order: 1, distance: 862.1 },
+                            { id: 'BR-011', name: 'กระบี่ อ่าวนาง', lat: 8.0348, lng: 98.9067, order: 2, distance: 165.3 },
+                            { id: 'BR-012', name: 'ตรัง เซ็นทรัล', lat: 7.5563, lng: 99.6114, order: 3, distance: 145.8 }
+                        ],
+                        totalDistance: 1173.2,
+                        estimatedTime: 16.5,
+                        optimizationScore: 87,
+                        lastOptimized: '2024-07-18T05:30:00Z'
+                    },
+                    {
+                        id: 'route-northeast-a',
+                        name: 'เส้นทางภาคอีสาน',
+                        zone: 'ZONE_NORTHEAST',
+                        status: 'delayed',
+                        vehicle: 'รถบรรทุก 10 ล้อ (KKC-001)',
+                        driver: 'วิไลวรรณ สุขใส',
+                        branches: [
+                            { id: 'BR-005', name: 'ขอนแก่น เซ็นทรัล', lat: 16.4322, lng: 102.8236, order: 1, distance: 449.2 },
+                            { id: 'BR-013', name: 'อุดรธานี เซ็นทรัล', lat: 17.4139, lng: 102.7864, order: 2, distance: 112.4 },
+                            { id: 'BR-014', name: 'หนองคาย วิลล่า', lat: 17.8782, lng: 102.7412, order: 3, distance: 67.8 }
+                        ],
+                        totalDistance: 629.4,
+                        estimatedTime: 9.2,
+                        optimizationScore: 78,
+                        lastOptimized: '2024-07-17T05:30:00Z'
+                    }
+                ];
+
+                displayRoutes(routes);
+                showRoutes(routes);
+                updateStatistics();
+
+            } catch (error) {
+                console.error('Error loading delivery routes:', error);
+            }
+        }
+
+        // Display routes on map
+        function showRoutes(routesToShow) {
+            // Clear existing markers and lines
+            routeMarkers.forEach(marker => routeMap.removeLayer(marker));
+            routeLines.forEach(line => routeMap.removeLayer(line));
+            routeMarkers = [];
+            routeLines = [];
+
+            routesToShow.forEach(route => {
+                // Add branch markers
+                route.branches.forEach(branch => {
+                    const statusColor = route.status === 'active' ? '#32CD32' :
+                                       route.status === 'planned' ? '#FFBF00' : '#FF6B6B';
+
+                    const marker = L.marker([branch.lat, branch.lng], {
+                        icon: L.divIcon({
+                            className: 'branch-marker',
+                            html: `<div style="background: ${statusColor}; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${branch.order}</div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        })
+                    }).addTo(routeMap);
+
+                    marker.bindPopup(`
+                        <strong>${branch.name}</strong><br>
+                        เส้นทาง: ${route.name}<br>
+                        ลำดับที่: ${branch.order}<br>
+                        ระยะทาง: ${branch.distance} กม.<br>
+                        สถานะ: ${getStatusText(route.status)}
+                    `);
+
+                    routeMarkers.push(marker);
+                });
+
+                // Draw route lines
+                if (route.branches.length > 1) {
+                    // Line from warehouse to first branch
+                    const warehouseToFirst = L.polyline([
+                        [13.7563, 100.5018],
+                        [route.branches[0].lat, route.branches[0].lng]
+                    ], {
+                        color: statusColor,
+                        weight: 4,
+                        opacity: 0.7,
+                        dashArray: route.status === 'planned' ? '10, 5' : null
+                    }).addTo(routeMap);
+                    routeLines.push(warehouseToFirst);
+
+                    // Lines between branches
+                    for (let i = 0; i < route.branches.length - 1; i++) {
+                        const line = L.polyline([
+                            [route.branches[i].lat, route.branches[i].lng],
+                            [route.branches[i + 1].lat, route.branches[i + 1].lng]
+                        ], {
+                            color: statusColor,
+                            weight: 4,
+                            opacity: 0.7,
+                            dashArray: route.status === 'planned' ? '10, 5' : null
+                        }).addTo(routeMap);
+                        routeLines.push(line);
+                    }
+                }
+            });
+
+            // Fit map to show all routes
+            if (routeMarkers.length > 0) {
+                const group = new L.featureGroup(routeMarkers);
+                routeMap.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Display routes list
+        function displayRoutes(routesToShow) {
+            const container = document.getElementById('routesList');
+            container.innerHTML = '';
+
+            routesToShow.forEach(route => {
+                const statusClass = `status-${route.status}`;
+                const statusText = getStatusText(route.status);
+                const statusIcon = route.status === 'active' ? 'truck' :
+                                  route.status === 'planned' ? 'clock' : 'exclamation-triangle';
+
+                const routeCard = `
+                    <div class="route-card">
+                        <div class="route-header">
+                            <div>
+                                <h5 class="mb-1">${route.name}</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-${statusIcon} me-1"></i>${route.vehicle} - ${route.driver}
+                                </p>
+                            </div>
+                            <span class="route-status ${statusClass}">${statusText}</span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <strong>ระยะทาง:</strong><br>
+                                <span class="text-primary">${route.totalDistance} กม.</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>เวลา:</strong><br>
+                                <span class="text-success">${route.estimatedTime} ชั่วโมง</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>สาขา:</strong><br>
+                                <span class="text-info">${route.branches.length} แห่ง</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>ประสิทธิภาพ:</strong><br>
+                                <span class="text-warning">${route.optimizationScore}%</span>
+                            </div>
+                        </div>
+
+                        <div class="branch-list">
+                            ${route.branches.map(branch => `
+                                <div class="branch-item">
+                                    <div class="branch-marker">${branch.order}</div>
+                                    <div>
+                                        <div class="fw-bold">${branch.name}</div>
+                                        <small class="text-muted">${branch.id}</small>
+                                    </div>
+                                    <div class="distance-badge">${branch.distance} กม.</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="vehicle-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong><i class="fas fa-truck me-1"></i>ยานพาหนะ:</strong> ${route.vehicle}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong><i class="fas fa-user me-1"></i>พนักงานขับรถ:</strong> ${route.driver}
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    ปรับปรุงเส้นทางครั้งสุดท้าย: ${formatDate(route.lastOptimized)}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3 gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewRouteDetails('${route.id}')">
+                                <i class="fas fa-eye me-1"></i>ดูรายละเอียด
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="optimizeRoute('${route.id}')">
+                                <i class="fas fa-route me-1"></i>ปรับปรุงเส้นทาง
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="trackRoute('${route.id}')">
+                                <i class="fas fa-map-marker-alt me-1"></i>ติดตาม
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML += routeCard;
+            });
+        }
+
+        // Helper functions
+        function getStatusText(status) {
+            switch (status) {
+                case 'active': return 'กำลังจัดส่ง';
+                case 'planned': return 'วางแผนแล้ว';
+                case 'delayed': return 'ล่าช้า';
+                default: return 'ไม่ทราบสถานะ';
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('th-TH', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Zone filtering
+        function showZone(zone) {
+            currentZone = zone;
+
+            // Update active button
+            document.querySelectorAll('.zone-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter routes
+            let filtered = routes;
+            if (zone !== 'all') {
+                filtered = routes.filter(route => route.zone === zone);
+            }
+
+            displayRoutes(filtered);
+            showRoutes(filtered);
+        }
+
+        // Route operations
+        function optimizeRoute(routeId) {
+            const route = routes.find(r => r.id === routeId);
+            if (route) {
+                // Simulate optimization
+                route.optimizationScore = Math.min(100, route.optimizationScore + Math.floor(Math.random() * 5) + 3);
+                route.totalDistance = Math.max(50, route.totalDistance - Math.floor(Math.random() * 20) - 5);
+                route.estimatedTime = Math.max(2, route.estimatedTime - Math.random() * 1);
+                route.lastOptimized = new Date().toISOString();
+
+                // Refresh display
+                displayRoutes(currentZone === 'all' ? routes : routes.filter(r => r.zone === currentZone));
+                showNotification(`ปรับปรุงเส้นทาง ${route.name} เรียบร้อยแล้ว`, 'success');
+            }
+        }
+
+        function optimizeAllRoutes() {
+            routes.forEach(route => {
+                route.optimizationScore = Math.min(100, route.optimizationScore + Math.floor(Math.random() * 3) + 1);
+                route.totalDistance = Math.max(50, route.totalDistance - Math.floor(Math.random() * 10) - 2);
+                route.estimatedTime = Math.max(2, route.estimatedTime - Math.random() * 0.5);
+                route.lastOptimized = new Date().toISOString();
+            });
+
+            displayRoutes(currentZone === 'all' ? routes : routes.filter(r => r.zone === currentZone));
+            showNotification('ปรับปรุงเส้นทางทั้งหมดเรียบร้อยแล้ว', 'success');
+            updateStatistics();
+        }
+
+        function viewRouteDetails(routeId) {
+            window.open(`/delivery-route-details?id=${routeId}`, '_blank');
+        }
+
+        function trackRoute(routeId) {
+            window.open(`/delivery-tracking?route=${routeId}`, '_blank');
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const totalRoutes = routes.length;
+            const totalBranches = routes.reduce((sum, route) => sum + route.branches.length, 0);
+            const avgTime = routes.reduce((sum, route) => sum + route.estimatedTime, 0) / totalRoutes;
+            const totalDistance = routes.reduce((sum, route) => sum + route.totalDistance, 0);
+
+            document.getElementById('totalRoutes').textContent = totalRoutes;
+            document.getElementById('activeBranches').textContent = totalBranches;
+            document.getElementById('avgDeliveryTime').textContent = avgTime.toFixed(1);
+            document.getElementById('totalDistance').textContent = Math.round(totalDistance).toLocaleString();
+        }
+
+        function refreshRoutes() {
+            loadDeliveryRoutes();
+            showNotification('รีเฟรชข้อมูลเส้นทางเรียบร้อยแล้ว', 'info');
+        }
+
+        function showNotification(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15
+    container_name: dried-fruit-postgres
+    environment:
+      POSTGRES_DB: dried_fruit_inventory
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - inventory-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: dried-fruit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - inventory-network
+
+  # Microservices
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://inventory_user:inventory_pass@postgres:5432/dried_fruit_inventory
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-here
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - inventory-network
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    container_name: inventory-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://inventory_user:inventory_pass@postgres:5432/dried_fruit_inventory
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - inventory-network
+
+  sales-service:
+    build:
+      context: .
+      dockerfile: services/sales-service/Dockerfile
+    container_name: sales-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DATABASE_URL=postgresql://inventory_user:inventory_pass@postgres:5432/dried_fruit_inventory
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - inventory-network
+
+  shipping-service:
+    build:
+      context: .
+      dockerfile: services/shipping-service/Dockerfile
+    container_name: shipping-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DATABASE_URL=postgresql://inventory_user:inventory_pass@postgres:5432/dried_fruit_inventory
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - inventory-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=development
+      - PORT=8001
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - SALES_SERVICE_URL=http://sales-service:3003
+      - SHIPPING_SERVICE_URL=http://shipping-service:3004
+    depends_on:
+      - auth-service
+      - inventory-service
+      - sales-service
+      - shipping-service
+    networks:
+      - inventory-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  inventory-network:
+    driver: bridge

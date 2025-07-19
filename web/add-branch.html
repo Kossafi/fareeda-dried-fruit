@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มสาขาใหม่ - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .form-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.9) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary-orange);
+        }
+
+        .form-header h1 {
+            color: var(--primary-deep-orange);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary-orange);
+        }
+
+        .step.completed .step-circle {
+            background: var(--success-green);
+        }
+
+        .step-label {
+            font-weight: 500;
+            color: #999;
+        }
+
+        .step.active .step-label {
+            color: var(--text-dark);
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger-red);
+        }
+
+        #locationMap {
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+            transform: translateY(-2px);
+        }
+
+        .preview-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 2px dashed var(--primary-orange);
+        }
+
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-label {
+            font-weight: 600;
+            color: var(--text-brown);
+        }
+
+        .initial-stock-item {
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .error-text {
+            color: var(--danger-red);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(50, 205, 50, 0.1);
+            border: 2px solid var(--success-green);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            color: var(--success-green);
+            display: none;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .branch-type-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .branch-type-card:hover {
+            border-color: var(--primary-orange);
+            background: var(--bg-light-yellow);
+        }
+
+        .branch-type-card.selected {
+            border-color: var(--primary-orange);
+            background: var(--bg-light-yellow);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h1><i class="fas fa-store-alt me-2"></i>เพิ่มสาขาใหม่</h1>
+            <p class="text-muted">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อเพิ่มสาขาใหม่ในระบบ</p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-circle">1</div>
+                <div class="step-label">ข้อมูลพื้นฐาน</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-circle">2</div>
+                <div class="step-label">ตำแหน่งที่ตั้ง</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-circle">3</div>
+                <div class="step-label">ผู้จัดการสาขา</div>
+            </div>
+            <div class="step" id="step4">
+                <div class="step-circle">4</div>
+                <div class="step-label">สต๊อคเริ่มต้น</div>
+            </div>
+            <div class="step" id="step5">
+                <div class="step-circle">5</div>
+                <div class="step-label">ตรวจสอบข้อมูล</div>
+            </div>
+        </div>
+
+        <form id="addBranchForm">
+            <!-- Step 1: Basic Information -->
+            <div class="form-section active" id="section1">
+                <h3 class="mb-4"><i class="fas fa-info-circle me-2"></i>ข้อมูลพื้นฐานสาขา</h3>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">รหัสสาขา</label>
+                        <input type="text" class="form-control" id="branchId" readonly>
+                        <small class="text-muted">ระบบจะสร้างรหัสอัตโนมัติ</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">ชื่อสาขา</label>
+                        <input type="text" class="form-control" id="branchName" required>
+                        <span class="error-text">กรุณากรอกชื่อสาขา</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label required">ประเภทสาขา</label>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="branch-type-card" onclick="selectBranchType('STANDARD')">
+                                <h5><i class="fas fa-store me-2"></i>Standard</h5>
+                                <p class="mb-0 text-muted">สาขาขนาดมาตรฐาน</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="branch-type-card" onclick="selectBranchType('EXPRESS')">
+                                <h5><i class="fas fa-rocket me-2"></i>Express</h5>
+                                <p class="mb-0 text-muted">สาขาขนาดเล็ก จัดส่งเร็ว</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="branch-type-card" onclick="selectBranchType('FLAGSHIP')">
+                                <h5><i class="fas fa-crown me-2"></i>Flagship</h5>
+                                <p class="mb-0 text-muted">สาขาหลักขนาดใหญ่</p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="branchType" required>
+                    <span class="error-text">กรุณาเลือกประเภทสาขา</span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">เบอร์โทรศัพท์</label>
+                        <input type="tel" class="form-control" id="branchPhone" required>
+                        <span class="error-text">กรุณากรอกเบอร์โทรศัพท์</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">อีเมล</label>
+                        <input type="email" class="form-control" id="branchEmail">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="button" class="btn btn-primary" onclick="nextStep(1)">
+                        ถัดไป <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Location -->
+            <div class="form-section" id="section2">
+                <h3 class="mb-4"><i class="fas fa-map-marked-alt me-2"></i>ตำแหน่งที่ตั้งสาขา</h3>
+                
+                <div class="mb-3">
+                    <label class="form-label required">ที่อยู่</label>
+                    <textarea class="form-control" id="branchAddress" rows="3" required></textarea>
+                    <span class="error-text">กรุณากรอกที่อยู่</span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">จังหวัด</label>
+                        <select class="form-select" id="branchProvince" required>
+                            <option value="">เลือกจังหวัด</option>
+                            <option value="bangkok">กรุงเทพมหานคร</option>
+                            <option value="chiangmai">เชียงใหม่</option>
+                            <option value="phuket">ภูเก็ต</option>
+                            <option value="khonkaen">ขอนแก่น</option>
+                            <option value="songkhla">สงขลา</option>
+                        </select>
+                        <span class="error-text">กรุณาเลือกจังหวัด</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">รหัสไปรษณีย์</label>
+                        <input type="text" class="form-control" id="branchPostcode" maxlength="5" required>
+                        <span class="error-text">กรุณากรอกรหัสไปรษณีย์</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">เลือกตำแหน่งบนแผนที่</label>
+                    <div id="locationMap"></div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="branchLat" placeholder="Latitude" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="branchLng" placeholder="Longitude" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required">โซนการจัดส่ง</label>
+                    <select class="form-select" id="deliveryZone" required>
+                        <option value="">เลือกโซน</option>
+                        <option value="ZONE_NORTH">ภาคเหนือ</option>
+                        <option value="ZONE_NORTHEAST">ภาคอีสาน</option>
+                        <option value="ZONE_CENTRAL">ภาคกลาง</option>
+                        <option value="ZONE_EAST">ภาคตะวันออก</option>
+                        <option value="ZONE_WEST">ภาคตะวันตก</option>
+                        <option value="ZONE_SOUTH">ภาคใต้</option>
+                    </select>
+                    <span class="error-text">กรุณาเลือกโซนการจัดส่ง</span>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                        <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                        ถัดไป <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Manager Information -->
+            <div class="form-section" id="section3">
+                <h3 class="mb-4"><i class="fas fa-user-tie me-2"></i>ข้อมูลผู้จัดการสาขา</h3>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">ชื่อ-นามสกุล</label>
+                        <input type="text" class="form-control" id="managerName" required>
+                        <span class="error-text">กรุณากรอกชื่อผู้จัดการ</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">เลขบัตรประชาชน</label>
+                        <input type="text" class="form-control" id="managerId" maxlength="13" required>
+                        <span class="error-text">กรุณากรอกเลขบัตรประชาชน 13 หลัก</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">เบอร์โทรศัพท์</label>
+                        <input type="tel" class="form-control" id="managerPhone" required>
+                        <span class="error-text">กรุณากรอกเบอร์โทรศัพท์</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">อีเมล</label>
+                        <input type="email" class="form-control" id="managerEmail" required>
+                        <span class="error-text">กรุณากรอกอีเมลที่ถูกต้อง</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">ประสบการณ์ทำงาน</label>
+                    <textarea class="form-control" id="managerExperience" rows="3" 
+                        placeholder="ระบุประสบการณ์ทำงานที่เกี่ยวข้อง..."></textarea>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ระบบจะสร้าง User Account สำหรับผู้จัดการโดยอัตโนมัติ
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(3)">
+                        <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                        ถัดไป <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Initial Stock -->
+            <div class="form-section" id="section4">
+                <h3 class="mb-4"><i class="fas fa-boxes me-2"></i>สต๊อคเริ่มต้น</h3>
+                
+                <div class="mb-3">
+                    <label class="form-label">เลือกเทมเพลตสต๊อค</label>
+                    <select class="form-select" id="stockTemplate" onchange="applyStockTemplate()">
+                        <option value="">กำหนดเอง</option>
+                        <option value="standard">Standard Branch (สาขามาตรฐาน)</option>
+                        <option value="express">Express Branch (สาขาขนาดเล็ก)</option>
+                        <option value="flagship">Flagship Branch (สาขาหลัก)</option>
+                    </select>
+                </div>
+
+                <div id="stockItems">
+                    <div class="initial-stock-item">
+                        <div>
+                            <strong>มะม่วงอบแห้ง Premium</strong>
+                            <br><small class="text-muted">DF-MANGO-001</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" style="width: 100px" 
+                                id="stock_mango" value="10" min="0">
+                            <span>kg</span>
+                        </div>
+                    </div>
+                    <div class="initial-stock-item">
+                        <div>
+                            <strong>สับปะรดอบแห้ง</strong>
+                            <br><small class="text-muted">DF-PINE-001</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" style="width: 100px" 
+                                id="stock_pineapple" value="15" min="0">
+                            <span>kg</span>
+                        </div>
+                    </div>
+                    <div class="initial-stock-item">
+                        <div>
+                            <strong>กล้วยอบแห้ง</strong>
+                            <br><small class="text-muted">DF-BANANA-001</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" style="width: 100px" 
+                                id="stock_banana" value="8" min="0">
+                            <span>kg</span>
+                        </div>
+                    </div>
+                    <div class="initial-stock-item">
+                        <div>
+                            <strong>ลำไยอบแห้ง</strong>
+                            <br><small class="text-muted">DF-LONGAN-001</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" style="width: 100px" 
+                                id="stock_longan" value="5" min="0">
+                            <span>kg</span>
+                        </div>
+                    </div>
+                    <div class="initial-stock-item">
+                        <div>
+                            <strong>ผลไม้รวม Premium</strong>
+                            <br><small class="text-muted">DF-MIXED-001</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control me-2" style="width: 100px" 
+                                id="stock_mixed" value="12" min="0">
+                            <span>kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    สต๊อคเริ่มต้นจะถูกสร้างใบสั่งซื้ออัตโนมัติเพื่อจัดส่งไปยังสาขา
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(4)">
+                        <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+                        ถัดไป <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Review -->
+            <div class="form-section" id="section5">
+                <h3 class="mb-4"><i class="fas fa-check-circle me-2"></i>ตรวจสอบข้อมูล</h3>
+                
+                <div class="preview-section">
+                    <h5 class="mb-3 text-primary">ข้อมูลสาขาใหม่</h5>
+                    <div id="previewContent">
+                        <!-- Preview content will be generated dynamically -->
+                    </div>
+                </div>
+
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="confirmData">
+                    <label class="form-check-label" for="confirmData">
+                        ข้าพเจ้ายืนยันว่าข้อมูลทั้งหมดถูกต้องและพร้อมส่งเข้าระบบอนุมัติ
+                    </label>
+                </div>
+
+                <div class="success-message" id="successMessage">
+                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                    <h4>สร้างสาขาใหม่สำเร็จ!</h4>
+                    <p>รหัสสาขา: <strong id="newBranchId"></strong></p>
+                    <p>สาขาจะเริ่มใช้งานได้หลังจากได้รับการอนุมัติ</p>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4" id="reviewButtons">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(5)">
+                        <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitBranch()" id="submitButton">
+                        <i class="fas fa-paper-plane me-2"></i>ส่งข้อมูล
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-white mt-3">กำลังสร้างสาขาใหม่...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let currentStep = 1;
+        let locationMap;
+        let marker;
+        let branchData = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateBranchId();
+        });
+
+        // Generate Branch ID
+        async function generateBranchId() {
+            try {
+                const response = await fetch('/api/branches/generate-id');
+                const data = await response.json();
+                document.getElementById('branchId').value = data.branchId || 'BR-001';
+            } catch (error) {
+                // Fallback ID
+                document.getElementById('branchId').value = 'BR-' + Date.now().toString().slice(-3);
+            }
+        }
+
+        // Step Navigation
+        function nextStep(step) {
+            if (validateStep(step)) {
+                document.getElementById(`section${step}`).classList.remove('active');
+                document.getElementById(`step${step}`).classList.add('completed');
+                
+                currentStep = step + 1;
+                document.getElementById(`section${currentStep}`).classList.add('active');
+                document.getElementById(`step${currentStep}`).classList.add('active');
+
+                // Initialize map on step 2
+                if (currentStep === 2 && !locationMap) {
+                    initLocationMap();
+                }
+
+                // Generate preview on step 5
+                if (currentStep === 5) {
+                    generatePreview();
+                }
+            }
+        }
+
+        function prevStep(step) {
+            document.getElementById(`section${step}`).classList.remove('active');
+            document.getElementById(`step${step}`).classList.remove('active');
+            
+            currentStep = step - 1;
+            document.getElementById(`section${currentStep}`).classList.add('active');
+        }
+
+        // Validation
+        function validateStep(step) {
+            let isValid = true;
+            const section = document.getElementById(`section${step}`);
+            const inputs = section.querySelectorAll('[required]');
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    input.nextElementSibling.style.display = 'block';
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.nextElementSibling.style.display = 'none';
+                }
+            });
+
+            // Special validations
+            if (step === 1 && !document.getElementById('branchType').value) {
+                document.querySelector('#section1 .error-text:last-child').style.display = 'block';
+                isValid = false;
+            }
+
+            if (step === 3) {
+                const managerId = document.getElementById('managerId').value;
+                if (managerId.length !== 13 || !/^\d+$/.test(managerId)) {
+                    document.getElementById('managerId').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                const email = document.getElementById('managerEmail').value;
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    document.getElementById('managerEmail').classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        // Branch Type Selection
+        function selectBranchType(type) {
+            document.querySelectorAll('.branch-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.getElementById('branchType').value = type;
+            
+            // Auto-apply stock template
+            if (currentStep > 3) {
+                document.getElementById('stockTemplate').value = type.toLowerCase();
+                applyStockTemplate();
+            }
+        }
+
+        // Initialize Location Map
+        function initLocationMap() {
+            locationMap = L.map('locationMap').setView([13.7563, 100.5018], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(locationMap);
+
+            // Add click event
+            locationMap.on('click', function(e) {
+                if (marker) {
+                    locationMap.removeLayer(marker);
+                }
+                
+                marker = L.marker(e.latlng).addTo(locationMap);
+                document.getElementById('branchLat').value = e.latlng.lat.toFixed(6);
+                document.getElementById('branchLng').value = e.latlng.lng.toFixed(6);
+            });
+        }
+
+        // Apply Stock Template
+        function applyStockTemplate() {
+            const template = document.getElementById('stockTemplate').value;
+            const stockValues = {
+                standard: { mango: 10, pineapple: 15, banana: 8, longan: 5, mixed: 12 },
+                express: { mango: 5, pineapple: 8, banana: 5, longan: 3, mixed: 6 },
+                flagship: { mango: 20, pineapple: 30, banana: 15, longan: 10, mixed: 25 }
+            };
+
+            if (stockValues[template]) {
+                document.getElementById('stock_mango').value = stockValues[template].mango;
+                document.getElementById('stock_pineapple').value = stockValues[template].pineapple;
+                document.getElementById('stock_banana').value = stockValues[template].banana;
+                document.getElementById('stock_longan').value = stockValues[template].longan;
+                document.getElementById('stock_mixed').value = stockValues[template].mixed;
+            }
+        }
+
+        // Generate Preview
+        function generatePreview() {
+            const data = {
+                branchId: document.getElementById('branchId').value,
+                branchName: document.getElementById('branchName').value,
+                branchType: document.getElementById('branchType').value,
+                branchPhone: document.getElementById('branchPhone').value,
+                branchEmail: document.getElementById('branchEmail').value,
+                branchAddress: document.getElementById('branchAddress').value,
+                branchProvince: document.getElementById('branchProvince').selectedOptions[0]?.text,
+                branchPostcode: document.getElementById('branchPostcode').value,
+                deliveryZone: document.getElementById('deliveryZone').selectedOptions[0]?.text,
+                lat: document.getElementById('branchLat').value,
+                lng: document.getElementById('branchLng').value,
+                managerName: document.getElementById('managerName').value,
+                managerPhone: document.getElementById('managerPhone').value,
+                managerEmail: document.getElementById('managerEmail').value,
+                stockMango: document.getElementById('stock_mango').value,
+                stockPineapple: document.getElementById('stock_pineapple').value,
+                stockBanana: document.getElementById('stock_banana').value,
+                stockLongan: document.getElementById('stock_longan').value,
+                stockMixed: document.getElementById('stock_mixed').value
+            };
+
+            branchData = data;
+
+            const previewHTML = `
+                <div class="preview-item">
+                    <span class="preview-label">รหัสสาขา:</span>
+                    <span>${data.branchId}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">ชื่อสาขา:</span>
+                    <span>${data.branchName}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">ประเภท:</span>
+                    <span>${data.branchType}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">ที่อยู่:</span>
+                    <span>${data.branchAddress}, ${data.branchProvince} ${data.branchPostcode}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">โซนจัดส่ง:</span>
+                    <span>${data.deliveryZone}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">ผู้จัดการ:</span>
+                    <span>${data.managerName} (${data.managerPhone})</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">สต๊อคเริ่มต้น:</span>
+                    <span>มะม่วง ${data.stockMango}kg, สับปะรด ${data.stockPineapple}kg, กล้วย ${data.stockBanana}kg</span>
+                </div>
+            `;
+
+            document.getElementById('previewContent').innerHTML = previewHTML;
+        }
+
+        // Submit Branch
+        async function submitBranch() {
+            if (!document.getElementById('confirmData').checked) {
+                alert('กรุณายืนยันความถูกต้องของข้อมูล');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').classList.add('show');
+            document.getElementById('submitButton').disabled = true;
+
+            try {
+                const response = await fetch('/api/branches', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(branchData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('newBranchId').textContent = result.data.branchId;
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('reviewButtons').style.display = 'none';
+                    
+                    // Auto-start setup process
+                    setTimeout(() => {
+                        startAutoSetup(result.data.branchId);
+                    }, 2000);
+                    
+                    // Send notification
+                    sendNotification(result.data);
+                } else {
+                    throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างสาขา');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+                document.getElementById('submitButton').disabled = false;
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+        }
+
+        // Start auto setup process
+        function startAutoSetup(branchId) {
+            const setupUrl = `/auto-branch-setup?id=${branchId}&name=${encodeURIComponent(branchData.branchName)}&manager=${encodeURIComponent(branchData.managerName)}&lat=${branchData.lat}&lng=${branchData.lng}&province=${encodeURIComponent(branchData.branchProvince)}`;
+            window.open(setupUrl, '_blank', 'width=1000,height=700');
+        }
+
+        // Send Notification
+        function sendNotification(branchData) {
+            // In real implementation, send to Line or notification system
+            console.log('Sending notification for new branch:', branchData);
+        }
+
+        // Input event listeners
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('blur', function() {
+                if (this.required && !this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

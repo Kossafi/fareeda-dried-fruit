@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เปรียบเทียบข้อมูลกับห้าง - ระบบจัดการผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .comparison-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 2px dashed var(--primary-orange);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary-deep-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .upload-section.drag-over {
+            background: rgba(255, 165, 0, 0.1);
+            border-color: var(--primary-deep-orange);
+            border-style: solid;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+            color: white;
+        }
+
+        .date-range-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 2px solid var(--primary-orange);
+        }
+
+        .comparison-result {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .match-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .match-perfect {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .match-partial {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .match-none {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .difference-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+        }
+
+        .difference-table thead {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, var(--bg-cream) 100%);
+        }
+
+        .difference-table th {
+            border: none;
+            font-weight: 600;
+            color: var(--text-dark);
+            padding: 1rem;
+        }
+
+        .difference-table td {
+            vertical-align: middle;
+            border-color: rgba(255, 215, 0, 0.1);
+            padding: 1rem;
+        }
+
+        .difference-row.match {
+            background: rgba(50, 205, 50, 0.05);
+        }
+
+        .difference-row.no-match {
+            background: rgba(255, 107, 107, 0.05);
+        }
+
+        .difference-row.partial-match {
+            background: rgba(255, 191, 0, 0.05);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            margin-top: 1.5rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--success-green) 0%, #00FF7F 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(50, 205, 50, 0.4);
+            color: white;
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .filter-btn {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, white 100%);
+            border: 2px solid var(--primary-orange);
+            color: var(--text-dark);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .difference-highlight {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .file-info {
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #007bff;
+        }
+
+        .progress-section {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .progress-section.show {
+            display: block;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .difference-table {
+                font-size: 0.875rem;
+            }
+            
+            .filter-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .summary-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-balance-scale me-2"></i>เปรียบเทียบข้อมูลกับห้าง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/dashboard">
+                            <i class="fas fa-home me-1"></i>หน้าหลัก
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/sales-pos">
+                            <i class="fas fa-cash-register me-1"></i>POS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/sales-live-feed">
+                            <i class="fas fa-broadcast-tower me-1"></i>Live Feed
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Date Range Selection -->
+        <div class="date-range-selector">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">ช่วงเวลาเปรียบเทียบ:</label>
+                </div>
+                <div class="col-md-9">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="date" class="form-control" id="startDate" value="2025-01-01">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="date" class="form-control" id="endDate" value="2025-01-17">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" onclick="updateDateRange()">
+                                <i class="fas fa-sync-alt me-2"></i>อัพเดท
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="comparison-container">
+            <h4 class="mb-4"><i class="fas fa-file-upload me-2"></i>อัพโหลดรายงานจากห้าง</h4>
+            
+            <div class="upload-section" id="uploadSection">
+                <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
+                <h5>ลากไฟล์มาวางที่นี่</h5>
+                <p class="text-muted mb-3">หรือคลิกเพื่อเลือกไฟล์</p>
+                <p class="small text-muted mb-3">รองรับไฟล์: Excel (.xlsx, .xls), CSV, PDF</p>
+                <input type="file" id="fileInput" style="display: none;" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFileUpload(event)">
+                <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-folder-open me-2"></i>เลือกไฟล์
+                </button>
+            </div>
+
+            <!-- File Info -->
+            <div class="file-info" id="fileInfo" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1"><i class="fas fa-file-excel me-2"></i><span id="fileName">sales_report.xlsx</span></h6>
+                        <small class="text-muted">ขนาด: <span id="fileSize">2.4 MB</span> | อัพโหลดเมื่อ: <span id="uploadTime">17 ม.ค. 2567 14:30</span></small>
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeFile()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection">
+            <h5 class="mb-3"><i class="fas fa-spinner fa-spin me-2"></i>กำลังประมวลผล...</h5>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                     id="progressBar" 
+                     style="width: 0%">0%</div>
+            </div>
+            <p class="text-muted mt-2 mb-0" id="progressStatus">กำลังอ่านข้อมูลจากไฟล์...</p>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section" id="filterSection" style="display: none;">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">แสดงผล:</label>
+                </div>
+                <div class="col-md-9">
+                    <button class="filter-btn active" onclick="filterResults('all')">ทั้งหมด</button>
+                    <button class="filter-btn" onclick="filterResults('match')">ตรงกัน</button>
+                    <button class="filter-btn" onclick="filterResults('no-match')">ไม่ตรงกัน</button>
+                    <button class="filter-btn" onclick="filterResults('difference')">มีความแตกต่าง</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Results -->
+        <div id="comparisonResults" style="display: none;">
+            <!-- Summary Cards -->
+            <div class="comparison-container">
+                <h4 class="mb-4"><i class="fas fa-chart-pie me-2"></i>สรุปผลการเปรียบเทียบ</h4>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-value text-primary" id="totalRecords">0</div>
+                        <div class="summary-label">รายการทั้งหมด</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value text-success" id="matchedRecords">0</div>
+                        <div class="summary-label">รายการที่ตรงกัน</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value text-warning" id="partialRecords">0</div>
+                        <div class="summary-label">รายการที่มีความแตกต่าง</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value text-danger" id="notFoundRecords">0</div>
+                        <div class="summary-label">รายการที่ไม่พบ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h6 class="mb-3"><i class="fas fa-chart-bar me-2"></i>เปรียบเทียบยอดขายรายวัน</h6>
+                        <canvas id="dailyComparisonChart" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>สัดส่วนผลการเปรียบเทียบ</h6>
+                        <canvas id="matchRatioChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Comparison Table -->
+            <div class="comparison-result">
+                <h5 class="mb-3"><i class="fas fa-list-alt me-2"></i>รายละเอียดการเปรียบเทียบ</h5>
+                <div class="table-responsive">
+                    <table class="table difference-table">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>สาขา</th>
+                                <th>ยอดขายบันทึก</th>
+                                <th>ยอดขายห้าง</th>
+                                <th>ความแตกต่าง</th>
+                                <th>สถานะ</th>
+                                <th>การดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody">
+                            <!-- Dynamic content will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-0"><i class="fas fa-download me-2"></i>ส่งออกรายงานการเปรียบเทียบ</h6>
+                        <small class="text-muted">รายงานจะรวมทุกรายการที่มีความแตกต่างและต้องตรวจสอบ</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn-export" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Excel
+                        </button>
+                        <button class="btn-export" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf me-2"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let uploadedFile = null;
+        let comparisonData = [];
+        let currentFilter = 'all';
+        let dailyChart = null;
+        let ratioChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragDrop();
+            setDefaultDates();
+        });
+
+        function setDefaultDates() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        function setupDragDrop() {
+            const uploadSection = document.getElementById('uploadSection');
+            
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.classList.add('drag-over');
+            });
+            
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.classList.remove('drag-over');
+            });
+            
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload({ target: { files: files } });
+                }
+            });
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const allowedTypes = ['.xlsx', '.xls', '.csv', '.pdf'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedTypes.includes(fileExtension)) {
+                alert('รองรับเฉพาะไฟล์ Excel, CSV และ PDF เท่านั้น');
+                return;
+            }
+            
+            uploadedFile = file;
+            displayFileInfo(file);
+            processFile(file);
+        }
+
+        function displayFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('uploadTime').textContent = new Date().toLocaleString('th-TH');
+            document.getElementById('fileInfo').style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function removeFile() {
+            uploadedFile = null;
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('comparisonResults').style.display = 'none';
+            document.getElementById('filterSection').style.display = 'none';
+        }
+
+        async function processFile(file) {
+            const progressSection = document.getElementById('progressSection');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            progressSection.classList.add('show');
+            
+            // Simulate file processing
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+                
+                if (progress <= 30) {
+                    progressStatus.textContent = 'กำลังอ่านข้อมูลจากไฟล์...';
+                } else if (progress <= 60) {
+                    progressStatus.textContent = 'กำลังวิเคราะห์ข้อมูล...';
+                } else if (progress <= 90) {
+                    progressStatus.textContent = 'กำลังเปรียบเทียบข้อมูล...';
+                } else {
+                    progressStatus.textContent = 'เสร็จสิ้น!';
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressSection.classList.remove('show');
+                        generateComparisonData();
+                        displayResults();
+                    }, 500);
+                }
+            }, 300);
+        }
+
+        function generateComparisonData() {
+            // Generate sample comparison data
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            const branches = ['เซ็นทรัล เวสต์เกต', 'สยาม พารากอน', 'เอ็มควอเทียร์', 'ไอคอนสยาม', 'เซ็นทรัล ลาดพร้าว'];
+            
+            comparisonData = [];
+            
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                for (const branch of branches) {
+                    const ourAmount = Math.floor(Math.random() * 50000) + 10000;
+                    const mallAmount = ourAmount + (Math.random() < 0.7 ? 0 : Math.floor(Math.random() * 5000) - 2500);
+                    const difference = ourAmount - mallAmount;
+                    
+                    let status = 'match';
+                    if (Math.abs(difference) > 0 && Math.abs(difference) < 100) {
+                        status = 'partial';
+                    } else if (Math.abs(difference) >= 100) {
+                        status = 'no-match';
+                    }
+                    
+                    comparisonData.push({
+                        date: new Date(d).toLocaleDateString('th-TH'),
+                        branch: branch,
+                        ourAmount: ourAmount,
+                        mallAmount: mallAmount,
+                        difference: difference,
+                        status: status
+                    });
+                }
+            }
+        }
+
+        function displayResults() {
+            document.getElementById('filterSection').style.display = 'block';
+            document.getElementById('comparisonResults').style.display = 'block';
+            
+            updateSummaryCards();
+            updateComparisonTable();
+            initializeCharts();
+        }
+
+        function updateSummaryCards() {
+            const total = comparisonData.length;
+            const matched = comparisonData.filter(d => d.status === 'match').length;
+            const partial = comparisonData.filter(d => d.status === 'partial').length;
+            const notFound = comparisonData.filter(d => d.status === 'no-match').length;
+            
+            document.getElementById('totalRecords').textContent = total.toLocaleString();
+            document.getElementById('matchedRecords').textContent = matched.toLocaleString();
+            document.getElementById('partialRecords').textContent = partial.toLocaleString();
+            document.getElementById('notFoundRecords').textContent = notFound.toLocaleString();
+        }
+
+        function updateComparisonTable() {
+            const tbody = document.getElementById('comparisonTableBody');
+            let filteredData = comparisonData;
+            
+            // Apply filter
+            if (currentFilter === 'match') {
+                filteredData = comparisonData.filter(d => d.status === 'match');
+            } else if (currentFilter === 'no-match') {
+                filteredData = comparisonData.filter(d => d.status === 'no-match');
+            } else if (currentFilter === 'difference') {
+                filteredData = comparisonData.filter(d => d.status !== 'match');
+            }
+            
+            // Show only first 50 records for performance
+            const displayData = filteredData.slice(0, 50);
+            
+            tbody.innerHTML = displayData.map(row => {
+                const statusBadge = row.status === 'match' ? 
+                    '<span class="match-badge match-perfect">ตรงกัน</span>' :
+                    row.status === 'partial' ?
+                    '<span class="match-badge match-partial">แตกต่างเล็กน้อย</span>' :
+                    '<span class="match-badge match-none">ไม่ตรงกัน</span>';
+                
+                const differenceDisplay = row.difference === 0 ? 
+                    '-' : 
+                    `<span class="${Math.abs(row.difference) > 100 ? 'difference-highlight' : ''}">
+                        ${row.difference > 0 ? '+' : ''}฿${row.difference.toLocaleString()}
+                    </span>`;
+                
+                return `
+                    <tr class="difference-row ${row.status}">
+                        <td>${row.date}</td>
+                        <td>${row.branch}</td>
+                        <td>฿${row.ourAmount.toLocaleString()}</td>
+                        <td>฿${row.mallAmount.toLocaleString()}</td>
+                        <td>${differenceDisplay}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('${row.date}', '${row.branch}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            if (filteredData.length > 50) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            แสดง 50 จาก ${filteredData.length} รายการ
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function initializeCharts() {
+            // Daily Comparison Chart
+            const dailyCtx = document.getElementById('dailyComparisonChart').getContext('2d');
+            
+            // Aggregate data by date
+            const dailyData = {};
+            comparisonData.forEach(row => {
+                if (!dailyData[row.date]) {
+                    dailyData[row.date] = { our: 0, mall: 0 };
+                }
+                dailyData[row.date].our += row.ourAmount;
+                dailyData[row.date].mall += row.mallAmount;
+            });
+            
+            const labels = Object.keys(dailyData).slice(0, 30); // Show last 30 days
+            const ourData = labels.map(date => dailyData[date].our);
+            const mallData = labels.map(date => dailyData[date].mall);
+            
+            if (dailyChart) dailyChart.destroy();
+            
+            dailyChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดขายบันทึก',
+                        data: ourData,
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'ยอดขายห้าง',
+                        data: mallData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Match Ratio Chart
+            const ratioCtx = document.getElementById('matchRatioChart').getContext('2d');
+            
+            const matched = comparisonData.filter(d => d.status === 'match').length;
+            const partial = comparisonData.filter(d => d.status === 'partial').length;
+            const notMatched = comparisonData.filter(d => d.status === 'no-match').length;
+            
+            if (ratioChart) ratioChart.destroy();
+            
+            ratioChart = new Chart(ratioCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ตรงกัน', 'แตกต่างเล็กน้อย', 'ไม่ตรงกัน'],
+                    datasets: [{
+                        data: [matched, partial, notMatched],
+                        backgroundColor: ['#32CD32', '#FFBF00', '#FF6B6B'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function filterResults(filter) {
+            currentFilter = filter;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            updateComparisonTable();
+        }
+
+        function updateDateRange() {
+            if (uploadedFile) {
+                processFile(uploadedFile);
+            } else {
+                alert('กรุณาอัพโหลดไฟล์ก่อน');
+            }
+        }
+
+        function viewDetails(date, branch) {
+            alert(`แสดงรายละเอียดการขายวันที่ ${date} สาขา ${branch}`);
+            // In real app, this would show detailed transaction comparison
+        }
+
+        function exportToExcel() {
+            const discrepancies = comparisonData.filter(d => d.status !== 'match');
+            
+            if (discrepancies.length === 0) {
+                alert('ไม่มีรายการที่ต้องตรวจสอบ');
+                return;
+            }
+            
+            // Create CSV content
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "วันที่,สาขา,ยอดขายบันทึก,ยอดขายห้าง,ความแตกต่าง,สถานะ\n"
+                + discrepancies.map(row => {
+                    const status = row.status === 'partial' ? 'แตกต่างเล็กน้อย' : 'ไม่ตรงกัน';
+                    return `${row.date},${row.branch},${row.ourAmount},${row.mallAmount},${row.difference},${status}`;
+                }).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `comparison_report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportToPDF() {
+            alert('กำลังสร้างรายงาน PDF...');
+            // In real app, this would generate a PDF report
+        }
+    </script>
+</body>
+</html>

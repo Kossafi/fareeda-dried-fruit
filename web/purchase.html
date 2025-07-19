@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดซื้อจากซัพพลายเออร์ - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+        }
+        .supplier-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #FFA500;
+        }
+        .supplier-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .product-item {
+            transition: all 0.2s ease;
+        }
+        .product-item:hover {
+            background-color: #fef7e0;
+        }
+        .cart-item {
+            background: linear-gradient(135deg, #fff 0%, #fef7e0 100%);
+            border-left: 3px solid #FFA500;
+        }
+        .modal {
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-yellow-200">
+                        <i class="fas fa-home text-xl"></i>
+                    </a>
+                    <h1 class="text-white text-xl font-bold">ระบบจัดซื้อจากซัพพลายเออร์</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="viewPurchaseHistory()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-history mr-2"></i>ประวัติการสั่งซื้อ
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleCart()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                            <i class="fas fa-shopping-cart mr-2"></i>ตะกร้า
+                            <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Suppliers Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">เลือกซัพพลายเออร์</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="suppliersGrid">
+                <!-- Supplier Card 1 -->
+                <div class="supplier-card bg-white rounded-xl shadow-lg p-6 cursor-pointer" onclick="selectSupplier('supplier1')">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-store text-orange-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">บริษัท ผลไม้ทองคำ จำกัด</h3>
+                            <p class="text-sm text-gray-600">ผู้จำหน่ายผลไม้อบแห้งคุณภาพสูง</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone w-4 mr-2"></i>
+                            <span>02-123-4567</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-4 mr-2"></i>
+                            <span>info@goldenfruit.co.th</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt w-4 mr-2"></i>
+                            <span>กรุงเทพมหานคร</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">สินค้า:</span>
+                            <span class="font-medium text-orange-600">15 รายการ</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">เรทติ้ง:</span>
+                            <span class="text-yellow-500">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                4.8
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier Card 2 -->
+                <div class="supplier-card bg-white rounded-xl shadow-lg p-6 cursor-pointer" onclick="selectSupplier('supplier2')">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-leaf text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">เนเจอรัล ฟรุ๊ต เซ็นเตอร์</h3>
+                            <p class="text-sm text-gray-600">ผลไม้อบแห้งออร์แกนิค</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone w-4 mr-2"></i>
+                            <span>02-234-5678</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-4 mr-2"></i>
+                            <span>sales@naturalfruit.com</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt w-4 mr-2"></i>
+                            <span>เชียงใหม่</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">สินค้า:</span>
+                            <span class="font-medium text-green-600">22 รายการ</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">เรทติ้ง:</span>
+                            <span class="text-yellow-500">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                                4.5
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier Card 3 -->
+                <div class="supplier-card bg-white rounded-xl shadow-lg p-6 cursor-pointer" onclick="selectSupplier('supplier3')">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-mountain text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">ดอยผลไม้ เทรดดิ้ง</h3>
+                            <p class="text-sm text-gray-600">ผลไม้อบแห้งจากภาคเหนือ</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone w-4 mr-2"></i>
+                            <span>053-345-6789</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-4 mr-2"></i>
+                            <span>contact@doifruit.co.th</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt w-4 mr-2"></i>
+                            <span>เชียงราย</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">สินค้า:</span>
+                            <span class="font-medium text-blue-600">18 รายการ</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">เรทติ้ง:</span>
+                            <span class="text-yellow-500">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                4.9
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section (Hidden by default) -->
+        <div id="productsSection" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">สินค้าจาก <span id="selectedSupplierName">ซัพพลายเออร์</span></h2>
+                        <p class="text-gray-600">เลือกสินค้าที่ต้องการสั่งซื้อ</p>
+                    </div>
+                    <button onclick="backToSuppliers()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>กลับ
+                    </button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <input type="text" id="productSearch" placeholder="ค้นหาสินค้า..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            <option value="">ทุกหมวดหมู่</option>
+                            <option value="mango">มะม่วงอบแห้ง</option>
+                            <option value="pineapple">สับปะรดอบแห้ง</option>
+                            <option value="banana">กล้วยอบแห้ง</option>
+                            <option value="mixed">ผลไม้รวม</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="sortBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                            <option value="name">เรียงตามชื่อ</option>
+                            <option value="price">เรียงตามราคา</option>
+                            <option value="popular">ความนิยม</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="productsGrid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Sidebar -->
+    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50">
+        <div class="p-6 border-b">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">ตะกร้าสินค้า</h3>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+            <div id="cartItems" class="space-y-4">
+                <!-- Cart items will be added here -->
+            </div>
+        </div>
+        
+        <div class="border-t p-6">
+            <div class="space-y-4">
+                <div class="flex justify-between text-lg font-bold">
+                    <span>ยอดรวม:</span>
+                    <span id="cartTotal" class="text-orange-600">฿0</span>
+                </div>
+                <button onclick="createPurchaseOrder()" class="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-medium">
+                    <i class="fas fa-file-invoice mr-2"></i>
+                    สร้างใบสั่งซื้อ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Order Modal -->
+    <div id="purchaseOrderModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">สร้างใบสั่งซื้อ</h2>
+                <button onclick="closePurchaseOrderModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="purchaseOrderForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">เลขที่ใบสั่งซื้อ</label>
+                        <input type="text" id="poNumber" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่สั่งซื้อ</label>
+                        <input type="date" id="orderDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ต้องการรับสินค้า</label>
+                        <input type="date" id="deliveryDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ผู้สั่งซื้อ</label>
+                        <input type="text" id="buyerName" value="ผู้จัดการคลังสินค้า" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">รายการสินค้า</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="border border-gray-300 px-4 py-2 text-left">สินค้า</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-center">จำนวน</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-center">หน่วย</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-right">ราคา/หน่วย</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-right">รวม</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderItemsTable">
+                                <!-- Order items will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-right">
+                                <div class="text-sm text-gray-600">ยอดรวมสินค้า:</div>
+                                <div class="text-sm text-gray-600">ภาษีมูลค่าเพิ่ม (7%):</div>
+                                <div class="text-lg font-bold text-gray-800">ยอดรวมทั้งสิ้น:</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm" id="subtotal">฿0</div>
+                                <div class="text-sm" id="vat">฿0</div>
+                                <div class="text-lg font-bold text-orange-600" id="grandTotal">฿0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+                    <textarea id="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closePurchaseOrderModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        ยกเลิก
+                    </button>
+                    <button type="button" onclick="printPurchaseOrder()" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-print mr-2"></i>ปริ้นท์
+                    </button>
+                    <button type="button" onclick="saveDraft()" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                        บันทึกแบบร่าง
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                        ส่งใบสั่งซื้อ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="print-functions.js"></script>
+    <script>
+        // Global variables
+        let selectedSupplier = null;
+        let cart = [];
+        let suppliers = {
+            supplier1: {
+                id: 'supplier1',
+                name: 'บริษัท ผลไม้ทองคำ จำกัด',
+                phone: '02-123-4567',
+                email: 'info@goldenfruit.co.th',
+                address: 'กรุงเทพมหานคร',
+                products: [
+                    { id: 'p1', name: 'มะม่วงอบแห้ง Premium', price: 1800, unit: 'kg', category: 'mango', minOrder: 5 },
+                    { id: 'p2', name: 'สับปะรดอบแห้ง', price: 1500, unit: 'kg', category: 'pineapple', minOrder: 10 },
+                    { id: 'p3', name: 'กล้วยอบแห้ง', price: 1400, unit: 'kg', category: 'banana', minOrder: 5 },
+                    { id: 'p4', name: 'ลำไยอบแห้ง', price: 2200, unit: 'kg', category: 'longan', minOrder: 3 },
+                    { id: 'p5', name: 'ผลไม้รวม Premium', price: 1900, unit: 'kg', category: 'mixed', minOrder: 5 }
+                ]
+            },
+            supplier2: {
+                id: 'supplier2',
+                name: 'เนเจอรัล ฟรุ๊ต เซ็นเตอร์',
+                phone: '02-234-5678',
+                email: 'sales@naturalfruit.com',
+                address: 'เชียงใหม่',
+                products: [
+                    { id: 'p6', name: 'มะม่วงอบแห้งออร์แกนิค', price: 2000, unit: 'kg', category: 'mango', minOrder: 3 },
+                    { id: 'p7', name: 'สับปะรดอบแห้งออร์แกนิค', price: 1700, unit: 'kg', category: 'pineapple', minOrder: 5 },
+                    { id: 'p8', name: 'กล้วยหอมอบแห้ง', price: 1600, unit: 'kg', category: 'banana', minOrder: 5 },
+                    { id: 'p9', name: 'มะละกออบแห้ง', price: 1300, unit: 'kg', category: 'papaya', minOrder: 10 }
+                ]
+            },
+            supplier3: {
+                id: 'supplier3',
+                name: 'ดอยผลไม้ เทรดดิ้ง',
+                phone: '053-345-6789',
+                email: 'contact@doifruit.co.th',
+                address: 'เชียงราย',
+                products: [
+                    { id: 'p10', name: 'มะม่วงน้ำดอกไม้อบแห้ง', price: 2500, unit: 'kg', category: 'mango', minOrder: 2 },
+                    { id: 'p11', name: 'ลิ้นจี่อบแห้ง', price: 2800, unit: 'kg', category: 'lychee', minOrder: 2 },
+                    { id: 'p12', name: 'ลองกองอบแห้ง', price: 2600, unit: 'kg', category: 'longan', minOrder: 3 }
+                ]
+            }
+        };
+
+        // Functions
+        function selectSupplier(supplierId) {
+            selectedSupplier = suppliers[supplierId];
+            document.getElementById('selectedSupplierName').textContent = selectedSupplier.name;
+            document.getElementById('productsSection').classList.remove('hidden');
+            loadProducts();
+            
+            // Scroll to products section
+            document.getElementById('productsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function backToSuppliers() {
+            document.getElementById('productsSection').classList.add('hidden');
+            selectedSupplier = null;
+        }
+
+        function loadProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            productsGrid.innerHTML = '';
+
+            selectedSupplier.products.forEach(product => {
+                const productCard = createProductCard(product);
+                productsGrid.appendChild(productCard);
+            });
+        }
+
+        function createProductCard(product) {
+            const div = document.createElement('div');
+            div.className = 'product-item bg-white rounded-lg shadow-md p-6 border hover:border-orange-300';
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-1">${product.name}</h3>
+                        <p class="text-sm text-gray-600">ขั้นต่ำ: ${product.minOrder} ${product.unit}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-bold text-orange-600">฿${product.price.toLocaleString()}</div>
+                        <div class="text-sm text-gray-600">ต่อ ${product.unit}</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2 mb-4">
+                    <input type="number" id="qty_${product.id}" min="${product.minOrder}" value="${product.minOrder}" 
+                           class="w-20 px-2 py-1 border border-gray-300 rounded text-center">
+                    <span class="text-sm text-gray-600">${product.unit}</span>
+                </div>
+                
+                <button onclick="addToCart('${product.id}')" 
+                        class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
+                    <i class="fas fa-cart-plus mr-2"></i>เพิ่มลงตะกร้า
+                </button>
+            `;
+            return div;
+        }
+
+        function addToCart(productId) {
+            const product = selectedSupplier.products.find(p => p.id === productId);
+            const quantity = parseInt(document.getElementById(`qty_${productId}`).value);
+            
+            if (quantity < product.minOrder) {
+                alert(`จำนวนขั้นต่ำ: ${product.minOrder} ${product.unit}`);
+                return;
+            }
+
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    unit: product.unit,
+                    quantity: quantity,
+                    supplier: selectedSupplier.name
+                });
+            }
+
+            updateCartDisplay();
+            updateCartCount();
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            cartItems.innerHTML = '';
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="text-center text-gray-500 py-8">ตะกร้าว่าง</div>';
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item rounded-lg p-4 mb-3';
+                cartItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-gray-800">${item.name}</h4>
+                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-2">${item.supplier}</div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <input type="number" value="${item.quantity}" min="1" 
+                                   onchange="updateCartItemQuantity(${index}, this.value)"
+                                   class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm">
+                            <span class="text-sm text-gray-600">${item.unit}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-orange-600">฿${(item.price * item.quantity).toLocaleString()}</div>
+                            <div class="text-xs text-gray-500">฿${item.price.toLocaleString()}/${item.unit}</div>
+                        </div>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+
+            updateCartTotal();
+        }
+
+        function updateCartItemQuantity(index, newQuantity) {
+            cart[index].quantity = parseInt(newQuantity);
+            updateCartDisplay();
+            updateCartCount();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        function updateCartTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('cartTotal').textContent = '฿' + total.toLocaleString();
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cartSidebar');
+            sidebar.classList.toggle('translate-x-full');
+        }
+
+        function createPurchaseOrder() {
+            if (cart.length === 0) {
+                alert('กรุณาเลือกสินค้าก่อนสร้างใบสั่งซื้อ');
+                return;
+            }
+
+            // Generate PO number
+            const poNumber = 'PO' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + 
+                           String(new Date().getDate()).padStart(2, '0') + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+            
+            document.getElementById('poNumber').value = poNumber;
+            document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+            
+            // Set delivery date to 7 days from now
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + 7);
+            document.getElementById('deliveryDate').value = deliveryDate.toISOString().split('T')[0];
+
+            populateOrderItems();
+            document.getElementById('purchaseOrderModal').classList.add('active');
+            toggleCart(); // Close cart
+        }
+
+        function populateOrderItems() {
+            const tableBody = document.getElementById('orderItemsTable');
+            tableBody.innerHTML = '';
+
+            let subtotal = 0;
+
+            cart.forEach(item => {
+                const row = document.createElement('tr');
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+
+                row.innerHTML = `
+                    <td class="border border-gray-300 px-4 py-2">${item.name}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">${item.quantity}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">${item.unit}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-right">฿${item.price.toLocaleString()}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-right">฿${itemTotal.toLocaleString()}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            const vat = subtotal * 0.07;
+            const grandTotal = subtotal + vat;
+
+            document.getElementById('subtotal').textContent = '฿' + subtotal.toLocaleString();
+            document.getElementById('vat').textContent = '฿' + Math.round(vat).toLocaleString();
+            document.getElementById('grandTotal').textContent = '฿' + Math.round(grandTotal).toLocaleString();
+        }
+
+        function closePurchaseOrderModal() {
+            document.getElementById('purchaseOrderModal').classList.remove('active');
+        }
+
+        function saveDraft() {
+            alert('บันทึกแบบร่างเรียบร้อยแล้ว');
+            // Implementation for saving draft
+        }
+
+        function viewPurchaseHistory() {
+            alert('ฟีเจอร์ประวัติการสั่งซื้อกำลังพัฒนา');
+            // Implementation for purchase history
+        }
+
+        // Form submission
+        document.getElementById('purchaseOrderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                poNumber: document.getElementById('poNumber').value,
+                orderDate: document.getElementById('orderDate').value,
+                deliveryDate: document.getElementById('deliveryDate').value,
+                buyerName: document.getElementById('buyerName').value,
+                notes: document.getElementById('notes').value,
+                supplier: selectedSupplier,
+                items: cart,
+                subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                vat: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.07,
+                grandTotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.07
+            };
+
+            // Send to API
+            fetch('/api/purchase-orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('ส่งใบสั่งซื้อเรียบร้อยแล้ว\nเลขที่: ' + formData.poNumber);
+                    closePurchaseOrderModal();
+                    cart = [];
+                    updateCartDisplay();
+                    updateCartCount();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartDisplay();
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>   
+     // Print Purchase Order function
+        function printPurchaseOrder() {
+            const printContent = generatePurchaseOrderPrintContent();
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function generatePurchaseOrderPrintContent() {
+            const poNumber = document.getElementById('poNumber').value;
+            const orderDate = document.getElementById('orderDate').value;
+            const deliveryDate = document.getElementById('deliveryDate').value;
+            const buyerName = document.getElementById('buyerName').value;
+            const notes = document.getElementById('notes').value;
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const vat = subtotal * 0.07;
+            const grandTotal = subtotal + vat;
+
+            let itemsHTML = '';
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                itemsHTML += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.unit}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">฿${item.price.toLocaleString()}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">฿${itemTotal.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบสั่งซื้อ ${poNumber}</title>
+                    <style>
+                        body { font-family: 'Sarabun', Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .company-info { margin-bottom: 20px; }
+                        .po-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                        .supplier-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background-color: #f5f5f5; }
+                        .total-section { margin-top: 20px; }
+                        .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
+                        .signature-box { text-align: center; width: 200px; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>ใบสั่งซื้อ (Purchase Order)</h1>
+                        <h2>ระบบจัดการสต๊อคผลไม้อบแห้ง</h2>
+                    </div>
+
+                    <div class="company-info">
+                        <strong>บริษัท ผลไม้อบแห้ง จำกัด</strong><br>
+                        123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110<br>
+                        โทร: 02-123-4567 | อีเมล: info@driedfruit.co.th
+                    </div>
+
+                    <div class="po-info">
+                        <div>
+                            <strong>เลขที่ใบสั่งซื้อ:</strong> ${poNumber}<br>
+                            <strong>วันที่สั่งซื้อ:</strong> ${new Date(orderDate).toLocaleDateString('th-TH')}<br>
+                            <strong>วันที่ต้องการรับสินค้า:</strong> ${new Date(deliveryDate).toLocaleDateString('th-TH')}
+                        </div>
+                        <div>
+                            <strong>ผู้สั่งซื้อ:</strong> ${buyerName}<br>
+                            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+                            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+                        </div>
+                    </div>
+
+                    <div class="supplier-info">
+                        <strong>ซัพพลายเออร์:</strong><br>
+                        ${selectedSupplier.name}<br>
+                        โทร: ${selectedSupplier.phone}<br>
+                        อีเมล: ${selectedSupplier.email}<br>
+                        ที่อยู่: ${selectedSupplier.address}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวน</th>
+                                <th>หน่วย</th>
+                                <th>ราคา/หน่วย</th>
+                                <th>รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+
+                    <div class="total-section">
+                        <table style="width: 300px; margin-left: auto;">
+                            <tr>
+                                <td style="text-align: right; padding: 5px;"><strong>ยอดรวมสินค้า:</strong></td>
+                                <td style="text-align: right; padding: 5px;">฿${subtotal.toLocaleString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: right; padding: 5px;"><strong>ภาษีมูลค่าเพิ่ม (7%):</strong></td>
+                                <td style="text-align: right; padding: 5px;">฿${Math.round(vat).toLocaleString()}</td>
+                            </tr>
+                            <tr style="background-color: #f5f5f5;">
+                                <td style="text-align: right; padding: 5px;"><strong>ยอดรวมทั้งสิ้น:</strong></td>
+                                <td style="text-align: right; padding: 5px;"><strong>฿${Math.round(grandTotal).toLocaleString()}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    ${notes ? `<div style="margin-top: 20px;"><strong>หมายเหตุ:</strong><br>${notes}</div>` : ''}
+
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+                            <div>ผู้สั่งซื้อ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+                            <div>ผู้อนุมัติ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+                            <div>ซัพพลายเออร์รับทราบ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+                        *** เอกสารนี้ออกโดยระบบจัดการสต๊อคผลไม้อบแห้ง ***
+                    </div>
+                </body>
+                </html>
+            `;
+        }

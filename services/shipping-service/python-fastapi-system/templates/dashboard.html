@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--shadow-warm);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-brown);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+            background: linear-gradient(135deg, var(--primary-deep-orange) 0%, #FF7F00 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 191, 0, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 191, 0, 0.4);
+        }
+
+        /* Charts Container */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-brown);
+        }
+
+        /* Product List */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.9) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .product-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .product-price {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary-deep-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-stock {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #FFF3CD 0%, #FCF4A3 100%);
+            color: var(--text-brown);
+            border-left: 4px solid var(--warning-amber);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #D1F2D1 0%, #C3F0C3 100%);
+            color: #155724;
+            border-left: 4px solid var(--success-green);
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3rem;
+            color: var(--primary-orange);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-icon {
+                font-size: 2rem;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        /* Fruit Icons */
+        .fruit-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-online {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .status-low-stock {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            color: white;
+        }
+
+        .status-in-stock {
+            background: linear-gradient(135deg, var(--success-green) 0%, #32CD32 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling fruit-icon"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/purchase">
+                            <i class="fas fa-shopping-bag"></i> จัดซื้อ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/goods-receipt">
+                            <i class="fas fa-truck-loading"></i> รับสินค้า
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs">
+                            <i class="fas fa-book"></i> API
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Status Alert -->
+        <div class="alert alert-success fade-in-up" role="alert">
+            <i class="fas fa-check-circle"></i>
+            <strong>ระบบพร้อมใช้งาน!</strong> ทุกระบบทำงานปกติ
+            <span class="status-badge status-online float-end">ONLINE</span>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="dashboard-card fade-in-up">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-pie fruit-icon"></i>
+                ภาพรวมระบบ
+            </h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-apple-alt"></i>
+                    </div>
+                    <div class="stat-number" id="totalProducts">-</div>
+                    <div class="stat-label">ชนิดผลไม้</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div class="stat-number" id="totalStock">-</div>
+                    <div class="stat-label">สต๊อคทั้งหมด</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-number" id="todaySales">0</div>
+                    <div class="stat-label">ขายวันนี้</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" id="totalUsers">-</div>
+                    <div class="stat-label">ผู้ใช้งาน</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card fade-in-up">
+            <h3 class="mb-4">
+                <i class="fas fa-bolt fruit-icon"></i>
+                การทำงานด่วน
+            </h3>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-primary w-100" onclick="openInventoryModal()">
+                        <i class="fas fa-plus-circle"></i>
+                        เพิ่มสต๊อค
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-success w-100" onclick="openSalesModal()">
+                        <i class="fas fa-shopping-cart"></i>
+                        บันทึกขาย
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-warning w-100" onclick="openBarcodeScanner()">
+                        <i class="fas fa-qrcode"></i>
+                        สแกน Barcode
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-primary w-100" onclick="showReports()">
+                        <i class="fas fa-chart-bar"></i>
+                        ดูรายงาน
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div class="dashboard-card fade-in-up" id="lowStockAlert" style="display: none;">
+            <h3 class="mb-4">
+                <i class="fas fa-exclamation-triangle fruit-icon text-warning"></i>
+                แจ้งเตือนสต๊อคใกล้หมด
+            </h3>
+            <div id="lowStockList">
+                <!-- Low stock items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Recent Products -->
+        <div class="dashboard-card fade-in-up">
+            <h3 class="mb-4">
+                <i class="fas fa-star fruit-icon"></i>
+                ผลไม้อบแห้งในสต๊อค
+            </h3>
+            <div class="product-grid" id="productGrid">
+                <!-- Products will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">กำลังโหลดข้อมูล...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // WebSocket connection
+        let socket = null;
+        let isConnected = false;
+
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            initializeWebSocket();
+        });
+
+        function initializeWebSocket() {
+            const wsUrl = `ws://${window.location.host}/ws`;
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function(event) {
+                console.log('WebSocket connected');
+                isConnected = true;
+                
+                // Subscribe to real-time updates
+                socket.send(JSON.stringify({
+                    type: 'subscribe',
+                    channel: 'dashboard'
+                }));
+                
+                // Show connection status
+                showNotification('🔗 เชื่อมต่อ Real-time สำเร็จ', 'success');
+            };
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleRealtimeMessage(data);
+            };
+
+            socket.onclose = function(event) {
+                console.log('WebSocket disconnected');
+                isConnected = false;
+                showNotification('❌ การเชื่อมต่อ Real-time ขาดหาย', 'warning');
+                
+                // Reconnect after 5 seconds
+                setTimeout(initializeWebSocket, 5000);
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                showNotification('🔧 เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+            };
+        }
+
+        function handleRealtimeMessage(data) {
+            switch(data.type) {
+                case 'stock_update':
+                    updateStockDisplay(data.product, data.newStock);
+                    showNotification(`📦 อัปเดตสต๊อค: ${data.product.name} เหลือ ${data.newStock} ${data.product.unit}`, 'info');
+                    break;
+                case 'new_sale':
+                    updateSalesStats(data.sale);
+                    showNotification(`💰 ขายสำเร็จ: ${data.sale.product} x${data.sale.quantity}`, 'success');
+                    break;
+                case 'low_stock_alert':
+                    showLowStockAlert(data.product);
+                    break;
+                case 'new_delivery':
+                    showNotification(`🚚 การจัดส่งใหม่: ${data.delivery.id} - ${data.delivery.customer}`, 'info');
+                    break;
+                case 'pong':
+                    console.log('WebSocket ping response received');
+                    break;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        function updateStockDisplay(product, newStock) {
+            // Update product cards if visible
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                const productName = card.querySelector('.product-name');
+                if (productName && productName.textContent.includes(product.name)) {
+                    const stockElement = card.querySelector('.product-stock');
+                    if (stockElement) {
+                        stockElement.innerHTML = `สต๊อค: ${newStock} ${product.unit} <span class="status-badge status-in-stock">พร้อมขาย</span>`;
+                    }
+                }
+            });
+        }
+
+        function updateSalesStats(sale) {
+            // Update today's sales count
+            const todaySalesElement = document.getElementById('todaySales');
+            if (todaySalesElement) {
+                const currentSales = parseInt(todaySalesElement.textContent) || 0;
+                todaySalesElement.textContent = currentSales + 1;
+            }
+        }
+
+        function showLowStockAlert(product) {
+            const lowStockAlert = document.getElementById('lowStockAlert');
+            const lowStockList = document.getElementById('lowStockList');
+            
+            if (lowStockAlert && lowStockList) {
+                lowStockAlert.style.display = 'block';
+                
+                const alertItem = document.createElement('div');
+                alertItem.className = 'alert alert-warning';
+                alertItem.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>${product.name}</strong> - สต๊อคเหลือน้อย: ${product.stock} ${product.unit}
+                    <span class="status-badge status-low-stock float-end">เติมสต๊อค</span>
+                `;
+                lowStockList.appendChild(alertItem);
+            }
+        }
+
+        // Send periodic ping to keep connection alive
+        setInterval(() => {
+            if (socket && isConnected) {
+                socket.send(JSON.stringify({
+                    type: 'ping',
+                    timestamp: new Date().toISOString()
+                }));
+            }
+        }, 30000); // Ping every 30 seconds
+
+        async function loadDashboardData() {
+            try {
+                showLoading();
+                
+                // Load all data in parallel
+                const [productsResponse, usersResponse] = await Promise.all([
+                    fetch('/products'),
+                    fetch('/users')
+                ]);
+
+                const productsData = await productsResponse.json();
+                const usersData = await usersResponse.json();
+
+                // Update stats
+                updateStats(productsData, usersData);
+                
+                // Load products
+                loadProducts(productsData);
+                
+                // Check for low stock
+                checkLowStock(productsData);
+                
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                hideLoading();
+            }
+        }
+
+        function updateStats(productsData, usersData) {
+            document.getElementById('totalProducts').textContent = productsData.total;
+            document.getElementById('totalUsers').textContent = usersData.total;
+            document.getElementById('totalStock').textContent = Math.floor(Math.random() * 10000) + 'กก'; // Mock data
+            document.getElementById('todaySales').textContent = Math.floor(Math.random() * 50);
+        }
+
+        function loadProducts(productsData) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+
+            const fruitEmojis = ['🥭', '🍇', '🍎', '🍌', '🍍'];
+            
+            productsData.products.forEach((product, index) => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-image">
+                        ${fruitEmojis[index % fruitEmojis.length]}
+                    </div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">฿${product.price.toFixed(2)}/${product.unit}</div>
+                    <div class="product-stock">
+                        สต๊อค: ${Math.floor(Math.random() * 100) + 10} ${product.unit}
+                        <span class="status-badge status-in-stock">พร้อมขาย</span>
+                    </div>
+                `;
+                productGrid.appendChild(productCard);
+            });
+        }
+
+        function checkLowStock(productsData) {
+            // Mock low stock check
+            const lowStockItems = productsData.products.filter(() => Math.random() < 0.3);
+            
+            if (lowStockItems.length > 0) {
+                const lowStockAlert = document.getElementById('lowStockAlert');
+                const lowStockList = document.getElementById('lowStockList');
+                
+                lowStockAlert.style.display = 'block';
+                lowStockList.innerHTML = '';
+                
+                lowStockItems.forEach(item => {
+                    const alertItem = document.createElement('div');
+                    alertItem.className = 'alert alert-warning';
+                    alertItem.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>${item.name}</strong> - เหลือเพียง ${Math.floor(Math.random() * 5) + 1} ${item.unit}
+                        <span class="status-badge status-low-stock float-end">สต๊อคต่ำ</span>
+                    `;
+                    lowStockList.appendChild(alertItem);
+                });
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+
+        // Quick Action Functions
+        function openInventoryModal() {
+            alert('🏪 เปิดหน้าจัดการสต๊อค - Coming Soon!');
+        }
+
+        function openSalesModal() {
+            alert('💰 เปิดหน้าบันทึกขาย - Coming Soon!');
+        }
+
+        function openBarcodeScanner() {
+            alert('📱 เปิด Barcode Scanner - Coming Soon!');
+        }
+
+        function showReports() {
+            alert('📊 เปิดหน้ารายงาน - Coming Soon!');
+        }
+    </script>
+</body>
+</html>

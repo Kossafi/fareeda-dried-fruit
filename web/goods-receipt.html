@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รับสินค้าเข้าคลัง - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+        }
+
+        .po-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #10B981;
+        }
+
+        .po-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .pending-po {
+            border-left-color: #F59E0B;
+            background: linear-gradient(135deg, #fff 0%, #fef7e0 100%);
+        }
+
+        .received-po {
+            border-left-color: #10B981;
+            background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
+        }
+
+        .modal {
+            display: none;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .count-input {
+            background: #fef7e0;
+            border: 2px solid #FFA500;
+        }
+
+        .count-input:focus {
+            background: #fff;
+            border-color: #FF8C00;
+        }
+
+        .discrepancy {
+            background: #fef2f2;
+            border-left: 3px solid #EF4444;
+        }
+
+        .match {
+            background: #f0fdf4;
+            border-left: 3px solid #10B981;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-yellow-200">
+                        <i class="fas fa-home text-xl"></i>
+                    </a>
+                    <h1 class="text-white text-xl font-bold">รับสินค้าเข้าคลัง</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="scanBarcode()"
+                        class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-qrcode mr-2"></i>สแกนบาร์โค้ด
+                    </button>
+                    <button onclick="viewReceiptHistory()"
+                        class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-history mr-2"></i>ประวัติการรับสินค้า
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Pending Purchase Orders -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">ใบสั่งซื้อที่รอรับสินค้า</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pendingPOsGrid">
+                <!-- PO Card 1 -->
+                <div class="po-card pending-po bg-white rounded-xl shadow-lg p-6 cursor-pointer"
+                    onclick="startReceiving('PO202407180001')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-gray-800 mb-1">PO202407180001</h3>
+                            <p class="text-sm text-gray-600">บริษัท ผลไม้ทองคำ จำกัด</p>
+                        </div>
+                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">รอรับสินค้า</span>
+                    </div>
+
+                    <div class="space-y-2 text-sm mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">วันที่สั่ง:</span>
+                            <span>18/07/2024</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">กำหนดส่ง:</span>
+                            <span class="text-orange-600 font-medium">25/07/2024</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">จำนวนรายการ:</span>
+                            <span>5 รายการ</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">มูลค่า:</span>
+                            <span class="font-bold text-green-600">฿25,000</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <button class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
+                            <i class="fas fa-clipboard-check mr-2"></i>เริ่มรับสินค้า
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PO Card 2 -->
+                <div class="po-card pending-po bg-white rounded-xl shadow-lg p-6 cursor-pointer"
+                    onclick="startReceiving('PO202407170002')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-gray-800 mb-1">PO202407170002</h3>
+                            <p class="text-sm text-gray-600">เนเจอรัล ฟรุ๊ต เซ็นเตอร์</p>
+                        </div>
+                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">รอรับสินค้า</span>
+                    </div>
+
+                    <div class="space-y-2 text-sm mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">วันที่สั่ง:</span>
+                            <span>17/07/2024</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">กำหนดส่ง:</span>
+                            <span class="text-orange-600 font-medium">24/07/2024</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">จำนวนรายการ:</span>
+                            <span>4 รายการ</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">มูลค่า:</span>
+                            <span class="font-bold text-green-600">฿18,500</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <button class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
+                            <i class="fas fa-clipboard-check mr-2"></i>เริ่มรับสินค้า
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Receipts -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">การรับสินค้าล่าสุด</h2>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    เลขที่ PO</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ซัพพลายเออร์</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    วันที่รับ</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    สถานะ</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    การดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PO202407160001
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ดอยผลไม้ เทรดดิ้ง</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">18/07/2024 09:30</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        รับครบ
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="viewReceipt('PO202407160001')"
+                                        class="text-orange-600 hover:text-orange-900">ดูรายละเอียด</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PO202407150001
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">บริษัท ผลไม้ทองคำ จำกัด
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">17/07/2024 14:15</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        มีส่วนต่าง
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="viewReceipt('PO202407150001')"
+                                        class="text-orange-600 hover:text-orange-900">ดูรายละเอียด</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <! -- Goods Receipt Modal -->
+        <div id="goodsReceiptModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-6xl w-full mx-4 max-h-screen overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">รับสินค้าเข้าคลัง</h2>
+                        <p class="text-gray-600">PO: <span id="currentPONumber"></span> | ซัพพลายเออร์: <span
+                                id="currentSupplier"></span></p>
+                    </div>
+                    <button onclick="closeGoodsReceiptModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Receipt Form -->
+                <form id="goodsReceiptForm">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เลขที่ใบรับสินค้า</label>
+                            <input type="text" id="grNumber" readonly
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่รับสินค้า</label>
+                            <input type="datetime-local" id="receiptDate" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ผู้รับสินค้า</label>
+                            <input type="text" id="receivedBy" value="พนักงานคลังสินค้า"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <!-- Items Counting -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">ตรวจนับสินค้า</h3>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-info-circle text-yellow-600 mr-2"></i>
+                                <span
+                                    class="text-sm text-yellow-800">กรุณาตรวจนับสินค้าที่ได้รับจริงและบันทึกจำนวนในช่องสีเหลือง</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse border border-gray-300">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="border border-gray-300 px-4 py-3 text-left">สินค้า</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">จำนวนที่สั่ง</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">หน่วย</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">จำนวนที่ได้รับ</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">ส่วนต่าง</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsCountingTable">
+                                    <!-- Items will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="mb-6">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4">สรุปการรับสินค้า</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="text-center p-4 bg-blue-100 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600" id="totalOrdered">0</div>
+                                    <div class="text-sm text-blue-800">รายการที่สั่ง</div>
+                                </div>
+                                <div class="text-center p-4 bg-green-100 rounded-lg">
+                                    <div class="text-2xl font-bold text-green-600" id="totalReceived">0</div>
+                                    <div class="text-sm text-green-800">รายการที่ได้รับ</div>
+                                </div>
+                                <div class="text-center p-4 bg-red-100 rounded-lg">
+                                    <div class="text-2xl font-bold text-red-600" id="totalDiscrepancies">0</div>
+                                    <div class="text-sm text-red-800">รายการที่มีส่วนต่าง</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+                        <textarea id="receiptNotes" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            placeholder="บันทึกหมายเหตุเพิ่มเติม เช่น สภาพสินค้า, การบรรจุ, ปัญหาที่พบ..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeGoodsReceiptModal()"
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            ยกเลิก
+                        </button>
+                        <button type="button" onclick="printGoodsReceipt()"
+                            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-print mr-2"></i>ปริ้นท์
+                        </button>
+                        <button type="button" onclick="saveDraftReceipt()"
+                            class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                            บันทึกแบบร่าง
+                        </button>
+                        <button type="submit" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                            <i class="fas fa-check mr-2"></i>ยืนยันรับสินค้า
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Barcode Scanner Modal -->
+        <div id="barcodeScannerModal"
+            class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">สแกนบาร์โค้ด</h3>
+                    <button onclick="closeBarcodeScanner()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-48 h-48 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-qrcode text-6xl text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-600 mb-4">วางบาร์โค้ดในกรอบเพื่อสแกน</p>
+                    <div class="space-y-2">
+                        <input type="text" id="manualBarcode" placeholder="หรือพิมพ์บาร์โค้ดด้วยตนเอง"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <button onclick="searchByBarcode()"
+                            class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600">
+                            ค้นหา
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script>
+            // Global variables
+            let currentPO = null;
+            let receiptItems = [];
+
+            // Mock data for purchase orders
+            const purchaseOrders = {
+                'PO202407180001': {
+                    poNumber: 'PO202407180001',
+                    supplier: 'บริษัท ผลไม้ทองคำ จำกัด',
+                    orderDate: '2024-07-18',
+                    deliveryDate: '2024-07-25',
+                    items: [
+                        { id: 'p1', name: 'มะม่วงอบแห้ง Premium', orderedQty: 10, unit: 'kg', price: 1800 },
+                        { id: 'p2', name: 'สับปะรดอบแห้ง', orderedQty: 15, unit: 'kg', price: 1500 },
+                        { id: 'p3', name: 'กล้วยอบแห้ง', orderedQty: 8, unit: 'kg', price: 1400 },
+                        { id: 'p4', name: 'ลำไยอบแห้ง', orderedQty: 5, unit: 'kg', price: 2200 },
+                        { id: 'p5', name: 'ผลไม้รวม Premium', orderedQty: 12, unit: 'kg', price: 1900 }
+                    ]
+                },
+                'PO202407170002': {
+                    poNumber: 'PO202407170002',
+                    supplier: 'เนเจอรัล ฟรุ๊ต เซ็นเตอร์',
+                    orderDate: '2024-07-17',
+                    deliveryDate: '2024-07-24',
+                    items: [
+                        { id: 'p6', name: 'มะม่วงอบแห้งออร์แกนิค', orderedQty: 6, unit: 'kg', price: 2000 },
+                        { id: 'p7', name: 'สับปะรดอบแห้งออร์แกนิค', orderedQty: 10, unit: 'kg', price: 1700 },
+                        { id: 'p8', name: 'กล้วยหอมอบแห้ง', orderedQty: 8, unit: 'kg', price: 1600 },
+                        { id: 'p9', name: 'มะละกออบแห้ง', orderedQty: 15, unit: 'kg', price: 1300 }
+                    ]
+                }
+            };
+
+            // Functions
+            function startReceiving(poNumber) {
+                currentPO = purchaseOrders[poNumber];
+                if (!currentPO) {
+                    alert('ไม่พบข้อมูลใบสั่งซื้อ');
+                    return;
+                }
+
+                // Generate GR number
+                const grNumber = 'GR' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') +
+                    String(new Date().getDate()).padStart(2, '0') + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+
+                document.getElementById('grNumber').value = grNumber;
+                document.getElementById('currentPONumber').textContent = currentPO.poNumber;
+                document.getElementById('currentSupplier').textContent = currentPO.supplier;
+
+                // Set current date and time
+                const now = new Date();
+                const dateTimeString = now.getFullYear() + '-' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(now.getDate()).padStart(2, '0') + 'T' +
+                    String(now.getHours()).padStart(2, '0') + ':' +
+                    String(now.getMinutes()).padStart(2, '0');
+                document.getElementById('receiptDate').value = dateTimeString;
+
+                populateItemsTable();
+                document.getElementById('goodsReceiptModal').classList.add('active');
+            }
+
+            function populateItemsTable() {
+                const tableBody = document.getElementById('itemsCountingTable');
+                tableBody.innerHTML = '';
+                receiptItems = [];
+
+                currentPO.items.forEach((item, index) => {
+                    receiptItems.push({
+                        ...item,
+                        receivedQty: item.orderedQty, // Default to ordered quantity
+                        difference: 0,
+                        status: 'match'
+                    });
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td class="border border-gray-300 px-4 py-3">${item.name}</td>
+                    <td class="border border-gray-300 px-4 py-3 text-center font-medium">${item.orderedQty}</td>
+                    <td class="border border-gray-300 px-4 py-3 text-center">${item.unit}</td>
+                    <td class="border border-gray-300 px-4 py-3 text-center">
+                        <input type="number" id="received_${index}" value="${item.orderedQty}" min="0" step="0.1"
+                               onchange="updateReceived(${index}, this.value)"
+                               class="count-input w-20 px-2 py-1 rounded text-center font-medium">
+                    </td>
+                    <td class="border border-gray-300 px-4 py-3 text-center">
+                        <span id="diff_${index}" class="font-medium">0</span>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-3 text-center">
+                        <span id="status_${index}" class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">ตรงกัน</span>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
+                });
+
+                updateSummary();
+            }
+
+            function updateReceived(index, receivedQty) {
+                const received = parseFloat(receivedQty) || 0;
+                const ordered = receiptItems[index].orderedQty;
+                const difference = received - ordered;
+
+                receiptItems[index].receivedQty = received;
+                receiptItems[index].difference = difference;
+                receiptItems[index].status = difference === 0 ? 'match' : 'discrepancy';
+
+                // Update difference display
+                const diffElement = document.getElementById(`diff_${index}`);
+                diffElement.textContent = difference > 0 ? `+${difference}` : difference.toString();
+                diffElement.className = difference === 0 ? 'font-medium text-gray-600' :
+                    difference > 0 ? 'font-medium text-green-600' : 'font-medium text-red-600';
+
+                // Update status display
+                const statusElement = document.getElementById(`status_${index}`);
+                if (difference === 0) {
+                    statusElement.className = 'px-2 py-1 rounded-full text-xs bg-green-100 text-green-800';
+                    statusElement.textContent = 'ตรงกัน';
+                } else if (difference > 0) {
+                    statusElement.className = 'px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800';
+                    statusElement.textContent = 'เกิน';
+                } else {
+                    statusElement.className = 'px-2 py-1 rounded-full text-xs bg-red-100 text-red-800';
+                    statusElement.textContent = 'ขาด';
+                }
+
+                // Update row styling
+                const row = statusElement.closest('tr');
+                row.className = difference === 0 ? 'match' : 'discrepancy';
+
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const totalOrdered = receiptItems.length;
+                const totalReceived = receiptItems.filter(item => item.receivedQty > 0).length;
+                const totalDiscrepancies = receiptItems.filter(item => item.difference !== 0).length;
+
+                document.getElementById('totalOrdered').textContent = totalOrdered;
+                document.getElementById('totalReceived').textContent = totalReceived;
+                document.getElementById('totalDiscrepancies').textContent = totalDiscrepancies;
+            }
+
+            function closeGoodsReceiptModal() {
+                document.getElementById('goodsReceiptModal').classList.remove('active');
+                currentPO = null;
+                receiptItems = [];
+            }
+
+            function saveDraftReceipt() {
+                alert('บันทึกแบบร่างเรียบร้อยแล้ว');
+            }
+
+            function scanBarcode() {
+                document.getElementById('barcodeScannerModal').classList.add('active');
+            }
+
+            function closeBarcodeScanner() {
+                document.getElementById('barcodeScannerModal').classList.remove('active');
+                document.getElementById('manualBarcode').value = '';
+            }
+
+            function searchByBarcode() {
+                const barcode = document.getElementById('manualBarcode').value;
+                if (barcode) {
+                    alert(`ค้นหาสินค้าด้วยบาร์โค้ด: ${barcode}`);
+                    closeBarcodeScanner();
+                }
+            }
+
+            function viewReceiptHistory() {
+                alert('ฟีเจอร์ประวัติการรับสินค้ากำลังพัฒนา');
+            }
+
+            function viewReceipt(poNumber) {
+                alert(`ดูรายละเอียดการรับสินค้า: ${poNumber}`);
+            }
+
+            // Form submission
+            document.getElementById('goodsReceiptForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    grNumber: document.getElementById('grNumber').value,
+                    poNumber: currentPO.poNumber,
+                    supplier: currentPO.supplier,
+                    receiptDate: document.getElementById('receiptDate').value,
+                    receivedBy: document.getElementById('receivedBy').value,
+                    notes: document.getElementById('receiptNotes').value,
+                    items: receiptItems,
+                    summary: {
+                        totalOrdered: receiptItems.length,
+                        totalReceived: receiptItems.filter(item => item.receivedQty > 0).length,
+                        totalDiscrepancies: receiptItems.filter(item => item.difference !== 0).length,
+                        hasDiscrepancies: receiptItems.some(item => item.difference !== 0)
+                    }
+                };
+
+                // Send to API
+                fetch('/api/goods-receipts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('รับสินค้าเข้าคลังเรียบร้อยแล้ว\nเลขที่: ' + formData.grNumber);
+                            closeGoodsReceiptModal();
+                            // Refresh the page or update the UI
+                            location.reload();
+                        } else {
+                            alert('เกิดข้อผิดพลาด: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                    });
+            });
+        </script>
+</body>
+
+</html>
+// Print Goods Receipt function
+function printGoodsReceipt() {
+const printContent = generateGoodsReceiptPrintContent();
+const printWindow = window.open('', '_blank');
+printWindow.document.write(printContent);
+printWindow.document.close();
+printWindow.print();
+}
+
+function generateGoodsReceiptPrintContent() {
+const grNumber = document.getElementById('grNumber').value;
+const receiptDate = document.getElementById('receiptDate').value;
+const receivedBy = document.getElementById('receivedBy').value;
+const notes = document.getElementById('receiptNotes').value;
+
+const totalOrdered = receiptItems.length;
+const totalReceived = receiptItems.filter(item => item.receivedQty > 0).length;
+const totalDiscrepancies = receiptItems.filter(item => item.difference !== 0).length;
+
+let itemsHTML = '';
+receiptItems.forEach(item => {
+const statusText = item.difference === 0 ? 'ตรงกัน' :
+item.difference > 0 ? 'เกิน' : 'ขาด';
+const statusColor = item.difference === 0 ? '#10B981' :
+item.difference > 0 ? '#3B82F6' : '#EF4444';
+
+itemsHTML += `
+<tr>
+    <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.orderedQty}</td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.receivedQty}</td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.unit}</td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: ${statusColor};">
+        ${item.difference > 0 ? '+' : ''}${item.difference}
+    </td>
+    <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: ${statusColor};">
+        ${statusText}
+    </td>
+</tr>
+`;
+});
+
+return `
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>ใบรับสินค้า ${grNumber}</title>
+    <style>
+        body {
+            font-family: 'Sarabun', Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .company-info {
+            margin-bottom: 20px;
+        }
+
+        .gr-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .po-info {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .summary-section {
+            margin-top: 20px;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>ใบรับสินค้า (Goods Receipt)</h1>
+        <h2>ระบบจัดการสต๊อคผลไม้อบแห้ง</h2>
+    </div>
+
+    <div class="company-info">
+        <strong>บริษัท ผลไม้อบแห้ง จำกัด</strong><br>
+        123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110<br>
+        โทร: 02-123-4567 | อีเมล: info@driedfruit.co.th
+    </div>
+
+    <div class="gr-info">
+        <div>
+            <strong>เลขที่ใบรับสินค้า:</strong> ${grNumber}<br>
+            <strong>เลขที่ใบสั่งซื้อ:</strong> ${currentPO.poNumber}<br>
+            <strong>วันที่รับสินค้า:</strong> ${new Date(receiptDate).toLocaleDateString('th-TH')}
+        </div>
+        <div>
+            <strong>ผู้รับสินค้า:</strong> ${receivedBy}<br>
+            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+        </div>
+    </div>
+
+    <div class="po-info">
+        <strong>ซัพพลายเออร์:</strong> ${currentPO.supplier}<br>
+        <strong>วันที่สั่งซื้อ:</strong> ${new Date(currentPO.orderDate).toLocaleDateString('th-TH')}<br>
+        <strong>กำหนดส่ง:</strong> ${new Date(currentPO.deliveryDate).toLocaleDateString('th-TH')}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>รายการสินค้า</th>
+                <th>จำนวนที่สั่ง</th>
+                <th>จำนวนที่ได้รับ</th>
+                <th>หน่วย</th>
+                <th>ส่วนต่าง</th>
+                <th>สถานะ</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${itemsHTML}
+        </tbody>
+    </table>
+
+    <div class="summary-section">
+        <table style="width: 400px; margin-left: auto;">
+            <tr>
+                <td style="text-align: right; padding: 5px;"><strong>รายการที่สั่งทั้งหมด:</strong></td>
+                <td style="text-align: right; padding: 5px;">${totalOrdered} รายการ</td>
+            </tr>
+            <tr>
+                <td style="text-align: right; padding: 5px;"><strong>รายการที่ได้รับ:</strong></td>
+                <td style="text-align: right; padding: 5px;">${totalReceived} รายการ</td>
+            </tr>
+            <tr style="background-color: ${totalDiscrepancies > 0 ? '#fef2f2' : '#f0fdf4'};">
+                <td style="text-align: right; padding: 5px;"><strong>รายการที่มีส่วนต่าง:</strong></td>
+                <td style="text-align: right; padding: 5px; color: ${totalDiscrepancies > 0 ? '#EF4444' : '#10B981'};">
+                    <strong>${totalDiscrepancies} รายการ</strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    ${notes ? `<div style="margin-top: 20px;"><strong>หมายเหตุ:</strong><br>${notes}</div>` : ''}
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+            <div>ผู้ส่งสินค้า</div>
+            <div>วันที่: _______________</div>
+        </div>
+        <div class="signature-box">
+            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+            <div>ผู้รับสินค้า</div>
+            <div>วันที่: _______________</div>
+        </div>
+        <div class="signature-box">
+            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; height: 50px;"></div>
+            <div>ผู้ตรวจสอบ</div>
+            <div>วันที่: _______________</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+        *** เอกสารนี้ออกโดยระบบจัดการสต๊อคผลไม้อบแห้ง ***<br>
+        ${totalDiscrepancies > 0 ? '⚠️ เอกสารนี้มีรายการที่มีส่วนต่าง กรุณาตรวจสอบ' : '✅ การรับสินค้าสมบูรณ์'}
+    </div>
+</body>
+
+</html>
+`;
+}
+</script>
+</body>
+
+</html>

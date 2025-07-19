@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ฟอร์มสั่งซื้อสินค้า - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .form-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-orange);
+        }
+
+        .form-header h1 {
+            color: var(--primary-deep-orange);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-orange);
+        }
+
+        .form-section h3 {
+            color: var(--text-brown);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .items-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px var(--shadow-soft);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .add-item-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-item-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--shadow-warm);
+        }
+
+        .remove-item-btn {
+            background: var(--danger-red);
+            border: none;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.875rem;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .total-row.final {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-deep-orange);
+            border-top: 2px solid var(--primary-orange);
+            padding-top: 1rem;
+        }
+
+        .preview-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 2px solid var(--primary-orange);
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: var(--warning-amber);
+            color: var(--text-dark);
+        }
+
+        .status-sent {
+            background: var(--success-green);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .form-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <div class="ms-auto">
+                <a href="/" class="btn btn-outline-dark">
+                    <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>
+                    <i class="fas fa-shopping-cart"></i>
+                    ฟอร์มสั่งซื้อสินค้า
+                </h1>
+                <p class="text-muted">กรอกข้อมูลสำหรับการสั่งซื้อสินค้าจากซัพพลายเออร์</p>
+            </div>
+
+            <form id="purchaseForm">
+                <!-- ข้อมูลทั่วไป -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-info-circle"></i>
+                        ข้อมูลทั่วไป
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">เลขที่ใบสั่งซื้อ</label>
+                                <input type="text" class="form-control" id="poNumber" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">วันที่สั่งซื้อ</label>
+                                <input type="date" class="form-control" id="orderDate" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">วันที่ต้องการรับสินค้า</label>
+                                <input type="date" class="form-control" id="deliveryDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ผู้สั่งซื้อ</label>
+                                <input type="text" class="form-control" id="buyerName" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ข้อมูลซัพพลายเออร์ -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-truck"></i>
+                        ข้อมูลซัพพลายเออร์
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ชื่อซัพพลายเออร์</label>
+                                <select class="form-control" id="supplierName" required>
+                                    <option value="">-- เลือกซัพพลายเออร์ --</option>
+                                    <option value="บริษัท ผลไม้อบแห้งไทย จำกัด">บริษัท ผลไม้อบแห้งไทย จำกัด</option>
+                                    <option value="สหกรณ์เกษตรกรผลไม้">สหกรณ์เกษตรกรผลไม้</option>
+                                    <option value="เนเจอรัล ดรายฟรุ้ต">เนเจอรัล ดรายฟรุ้ต</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">เบอร์โทรศัพท์</label>
+                                <input type="tel" class="form-control" id="supplierPhone" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">อีเมล</label>
+                                <input type="email" class="form-control" id="supplierEmail" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ที่อยู่</label>
+                                <input type="text" class="form-control" id="supplierAddress" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- รายการสินค้า -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-list"></i>
+                        รายการสินค้า
+                    </h3>
+                    <div class="items-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อสินค้า</th>
+                                    <th>จำนวน</th>
+                                    <th>หน่วย</th>
+                                    <th>ราคา/หน่วย</th>
+                                    <th>รวม</th>
+                                    <th>ลบ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody">
+                                <tr>
+                                    <td>
+                                        <input type="text" class="form-control" name="itemName[]" placeholder="ชื่อสินค้า" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-quantity" name="itemQuantity[]" min="1" required>
+                                    </td>
+                                    <td>
+                                        <select class="form-control" name="itemUnit[]" required>
+                                            <option value="">หน่วย</option>
+                                            <option value="กก.">กก.</option>
+                                            <option value="กรัม">กรัม</option>
+                                            <option value="ชิ้น">ชิ้น</option>
+                                            <option value="ลัง">ลัง</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-price" name="itemPrice[]" min="0" step="0.01" required>
+                                    </td>
+                                    <td>
+                                        <span class="item-total">0.00</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="remove-item-btn" onclick="removeItem(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="add-item-btn mt-3" onclick="addItem()">
+                        <i class="fas fa-plus"></i> เพิ่มรายการสินค้า
+                    </button>
+                </div>
+
+                <!-- ยอดรวม -->
+                <div class="total-section">
+                    <div class="total-row">
+                        <span>ยอดรวมสินค้า:</span>
+                        <span id="subtotal">฿0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>ภาษีมูลค่าเพิ่ม (7%):</span>
+                        <span id="vat">฿0.00</span>
+                    </div>
+                    <div class="total-row final">
+                        <span>ยอดรวมทั้งสิ้น:</span>
+                        <span id="grandTotal">฿0.00</span>
+                    </div>
+                </div>
+
+                <!-- หมายเหตุ -->
+                <div class="form-section">
+                    <h3>
+                        <i class="fas fa-sticky-note"></i>
+                        หมายเหตุ
+                    </h3>
+                    <textarea class="form-control" id="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
+                </div>
+
+                <!-- ปุ่มดำเนินการ -->
+                <div class="text-center">
+                    <button type="button" class="btn btn-primary me-3" onclick="previewOrder()">
+                        <i class="fas fa-eye"></i> ดูตัวอย่าง
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="confirmOrder()">
+                        <i class="fas fa-check-circle"></i> ยืนยันและส่งคำสั่งซื้อ
+                    </button>
+                </div>
+            </form>
+
+            <!-- ตัวอย่างเอกสาร -->
+            <div class="preview-section" id="previewSection">
+                <h4>
+                    <i class="fas fa-file-alt"></i>
+                    ตัวอย่างเอกสารใบสั่งซื้อ
+                </h4>
+                <div id="previewContent"></div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-primary" onclick="printOrder()">
+                        <i class="fas fa-print"></i> ปริ้นท์เอกสาร
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Generate PO Number
+        function generatePONumber() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const time = String(date.getHours()).padStart(2, '0') + String(date.getMinutes()).padStart(2, '0');
+            return `PO-${year}${month}${day}-${time}`;
+        }
+
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('poNumber').value = generatePONumber();
+            document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+            
+            // Set default delivery date (7 days from today)
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + 7);
+            document.getElementById('deliveryDate').value = deliveryDate.toISOString().split('T')[0];
+            
+            // Auto-fill supplier data
+            document.getElementById('supplierName').addEventListener('change', function() {
+                const suppliers = {
+                    'บริษัท ผลไม้อบแห้งไทย จำกัด': {
+                        phone: '02-123-4567',
+                        email: 'info@driedfruit.co.th',
+                        address: '123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110'
+                    },
+                    'สหกรณ์เกษตรกรผลไม้': {
+                        phone: '02-234-5678',
+                        email: 'sales@fruitcoop.com',
+                        address: '456 ถนนพหลโยธิน แขวงจตุจักร เขตจตุจักร กรุงเทพฯ 10900'
+                    },
+                    'เนเจอรัล ดรายฟรุ้ต': {
+                        phone: '02-345-6789',
+                        email: 'contact@naturalfruit.th',
+                        address: '789 ถนนรัชดาภิเษก แขวงดินแดง เขตดินแดง กรุงเทพฯ 10400'
+                    }
+                };
+                
+                const selected = suppliers[this.value];
+                if (selected) {
+                    document.getElementById('supplierPhone').value = selected.phone;
+                    document.getElementById('supplierEmail').value = selected.email;
+                    document.getElementById('supplierAddress').value = selected.address;
+                }
+            });
+            
+            // Calculate totals on input change
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('item-quantity') || e.target.classList.contains('item-price')) {
+                    calculateTotals();
+                }
+            });
+        });
+
+        // Add new item row
+        function addItem() {
+            const tbody = document.getElementById('itemsTableBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>
+                    <input type="text" class="form-control" name="itemName[]" placeholder="ชื่อสินค้า" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-quantity" name="itemQuantity[]" min="1" required>
+                </td>
+                <td>
+                    <select class="form-control" name="itemUnit[]" required>
+                        <option value="">หน่วย</option>
+                        <option value="กก.">กก.</option>
+                        <option value="กรัม">กรัม</option>
+                        <option value="ชิ้น">ชิ้น</option>
+                        <option value="ลัง">ลัง</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-price" name="itemPrice[]" min="0" step="0.01" required>
+                </td>
+                <td>
+                    <span class="item-total">0.00</span>
+                </td>
+                <td>
+                    <button type="button" class="remove-item-btn" onclick="removeItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+        }
+
+        // Remove item row
+        function removeItem(button) {
+            const row = button.closest('tr');
+            const tbody = document.getElementById('itemsTableBody');
+            if (tbody.children.length > 1) {
+                row.remove();
+                calculateTotals();
+            } else {
+                alert('ต้องมีรายการสินค้าอย่างน้อย 1 รายการ');
+            }
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            
+            rows.forEach(row => {
+                const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = quantity * price;
+                
+                row.querySelector('.item-total').textContent = total.toFixed(2);
+                subtotal += total;
+            });
+            
+            const vat = subtotal * 0.07;
+            const grandTotal = subtotal + vat;
+            
+            document.getElementById('subtotal').textContent = '฿' + subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('vat').textContent = '฿' + vat.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('grandTotal').textContent = '฿' + grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+        }
+
+        // Preview order
+        function previewOrder() {
+            const form = document.getElementById('purchaseForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = collectFormData();
+            const previewHTML = generatePreviewHTML(formData);
+            
+            document.getElementById('previewContent').innerHTML = previewHTML;
+            document.getElementById('previewSection').style.display = 'block';
+            
+            // Scroll to preview
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Collect form data
+        function collectFormData() {
+            const formData = {
+                poNumber: document.getElementById('poNumber').value,
+                orderDate: document.getElementById('orderDate').value,
+                deliveryDate: document.getElementById('deliveryDate').value,
+                buyerName: document.getElementById('buyerName').value,
+                supplier: {
+                    name: document.getElementById('supplierName').value,
+                    phone: document.getElementById('supplierPhone').value,
+                    email: document.getElementById('supplierEmail').value,
+                    address: document.getElementById('supplierAddress').value
+                },
+                items: [],
+                notes: document.getElementById('notes').value
+            };
+            
+            // Collect items
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('input[name="itemName[]"]').value;
+                const quantity = parseFloat(row.querySelector('input[name="itemQuantity[]"]').value) || 0;
+                const unit = row.querySelector('select[name="itemUnit[]"]').value;
+                const price = parseFloat(row.querySelector('input[name="itemPrice[]"]').value) || 0;
+                
+                if (name && quantity > 0 && unit && price > 0) {
+                    formData.items.push({
+                        name,
+                        quantity,
+                        unit,
+                        price,
+                        total: quantity * price
+                    });
+                }
+            });
+            
+            return formData;
+        }
+
+        // Generate preview HTML
+        function generatePreviewHTML(data) {
+            const subtotal = data.items.reduce((sum, item) => sum + item.total, 0);
+            const vat = subtotal * 0.07;
+            const grandTotal = subtotal + vat;
+            
+            let itemsHTML = '';
+            data.items.forEach((item, index) => {
+                itemsHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-center">${item.unit}</td>
+                        <td class="text-end">฿${item.price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end">฿${item.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <div class="preview-document">
+                    <div class="text-center mb-4">
+                        <h4>ใบสั่งซื้อ (Purchase Order)</h4>
+                        <h5>ระบบจัดการสต๊อคผลไม้อบแห้ง</h5>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>เลขที่ใบสั่งซื้อ:</strong> ${data.poNumber}<br>
+                            <strong>วันที่สั่งซื้อ:</strong> ${new Date(data.orderDate).toLocaleDateString('th-TH')}<br>
+                            <strong>วันที่ต้องการรับสินค้า:</strong> ${new Date(data.deliveryDate).toLocaleDateString('th-TH')}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>ผู้สั่งซื้อ:</strong> ${data.buyerName}<br>
+                            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+                            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>ซัพพลายเออร์:</strong><br>
+                        ${data.supplier.name}<br>
+                        โทร: ${data.supplier.phone}<br>
+                        อีเมล: ${data.supplier.email}<br>
+                        ที่อยู่: ${data.supplier.address}
+                    </div>
+                    
+                    <table class="table table-bordered">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>ลำดับ</th>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวน</th>
+                                <th>หน่วย</th>
+                                <th>ราคา/หน่วย</th>
+                                <th>รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="row">
+                        <div class="col-md-8"></div>
+                        <div class="col-md-4">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ยอดรวมสินค้า:</strong></td>
+                                    <td class="text-end">฿${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ภาษีมูลค่าเพิ่ม (7%):</strong></td>
+                                    <td class="text-end">฿${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td><strong>ยอดรวมทั้งสิ้น:</strong></td>
+                                    <td class="text-end"><strong>฿${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    ${data.notes ? `<div class="mt-3"><strong>หมายเหตุ:</strong><br>${data.notes}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Print order
+        function printOrder() {
+            const formData = collectFormData();
+            const printContent = generatePrintHTML(formData);
+            
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Generate print HTML
+        function generatePrintHTML(data) {
+            const subtotal = data.items.reduce((sum, item) => sum + item.total, 0);
+            const vat = subtotal * 0.07;
+            const grandTotal = subtotal + vat;
+            
+            let itemsHTML = '';
+            data.items.forEach((item, index) => {
+                itemsHTML += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.unit}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">฿${item.price.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">฿${item.total.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบสั่งซื้อ ${data.poNumber}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Prompt', Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .company-info { margin-bottom: 20px; }
+                        .order-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                        .supplier-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background-color: #FFD700; font-weight: 600; }
+                        .total-section { margin-top: 20px; }
+                        .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
+                        .signature-box { text-align: center; width: 200px; }
+                        .signature-line { border-bottom: 1px solid #000; margin: 30px 0 10px 0; height: 50px; }
+                        @media print {
+                            body { margin: 0; font-size: 12px; }
+                            .signature-line { height: 40px; margin: 20px 0 10px 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>ใบสั่งซื้อ (Purchase Order)</h1>
+                        <h2>ระบบจัดการสต๊อคผลไม้อบแห้ง</h2>
+                    </div>
+
+                    <div class="company-info">
+                        <strong>บริษัท ผลไม้อบแห้ง จำกัด</strong><br>
+                        123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองตัน กรุงเทพฯ 10110<br>
+                        โทร: 02-123-4567 | อีเมล: info@driedfruit.co.th
+                    </div>
+
+                    <div class="order-info">
+                        <div>
+                            <strong>เลขที่ใบสั่งซื้อ:</strong> ${data.poNumber}<br>
+                            <strong>วันที่สั่งซื้อ:</strong> ${new Date(data.orderDate).toLocaleDateString('th-TH')}<br>
+                            <strong>วันที่ต้องการรับสินค้า:</strong> ${new Date(data.deliveryDate).toLocaleDateString('th-TH')}
+                        </div>
+                        <div>
+                            <strong>ผู้สั่งซื้อ:</strong> ${data.buyerName}<br>
+                            <strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH')}<br>
+                            <strong>เวลา:</strong> ${new Date().toLocaleTimeString('th-TH')}
+                        </div>
+                    </div>
+
+                    <div class="supplier-info">
+                        <strong>ซัพพลายเออร์:</strong><br>
+                        ${data.supplier.name}<br>
+                        โทร: ${data.supplier.phone}<br>
+                        อีเมล: ${data.supplier.email}<br>
+                        ที่อยู่: ${data.supplier.address}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ลำดับ</th>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวน</th>
+                                <th>หน่วย</th>
+                                <th>ราคา/หน่วย</th>
+                                <th>รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+
+                    <div class="total-section">
+                        <table style="width: 300px; margin-left: auto;">
+                            <tr>
+                                <td style="text-align: right; padding: 5px;"><strong>ยอดรวมสินค้า:</strong></td>
+                                <td style="text-align: right; padding: 5px;">฿${subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: right; padding: 5px;"><strong>ภาษีมูลค่าเพิ่ม (7%):</strong></td>
+                                <td style="text-align: right; padding: 5px;">฿${vat.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                            </tr>
+                            <tr style="background-color: #FFD700;">
+                                <td style="text-align: right; padding: 5px;"><strong>ยอดรวมทั้งสิ้น:</strong></td>
+                                <td style="text-align: right; padding: 5px;"><strong>฿${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    ${data.notes ? `<div style="margin-top: 20px;"><strong>หมายเหตุ:</strong><br>${data.notes}</div>` : ''}
+
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ผู้สั่งซื้อ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ผู้อนุมัติ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <div>ซัพพลายเออร์รับทราบ</div>
+                            <div>วันที่: _______________</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+                        *** เอกสารนี้ออกโดยระบบจัดการสต๊อคผลไม้อบแห้ง ***
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        // Confirm order
+        function confirmOrder() {
+            const form = document.getElementById('purchaseForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = collectFormData();
+            
+            if (formData.items.length === 0) {
+                alert('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ');
+                return;
+            }
+            
+            if (confirm('ต้องการยืนยันการสั่งซื้อนี้หรือไม่?')) {
+                // Save order data
+                const orderData = {
+                    ...formData,
+                    timestamp: new Date().toISOString(),
+                    status: 'confirmed'
+                };
+                
+                // Save to localStorage (in real app, send to server)
+                localStorage.setItem('lastPurchaseOrder', JSON.stringify(orderData));
+                
+                // Auto print
+                printOrder();
+                
+                // Send to Line (placeholder)
+                sendToLine(orderData);
+                
+                alert('✅ ยืนยันคำสั่งซื้อสำเร็จ!\n🖨️ กำลังปริ้นท์เอกสาร\n📱 กำลังส่งไปยัง Line');
+                
+                // Reset form
+                if (confirm('ต้องการล้างฟอร์มเพื่อสร้างใบสั่งซื้อใหม่หรือไม่?')) {
+                    location.reload();
+                }
+            }
+        }
+
+        // Send to Line (placeholder function)
+        function sendToLine(orderData) {
+            // This would integrate with Line API
+            console.log('Sending to Line:', orderData);
+            
+            // Simulate Line message
+            const message = `📋 ใบสั่งซื้อใหม่: ${orderData.poNumber}\n` +
+                           `🏢 ซัพพลายเออร์: ${orderData.supplier.name}\n` +
+                           `📅 วันที่สั่งซื้อ: ${new Date(orderData.orderDate).toLocaleDateString('th-TH')}\n` +
+                           `💰 ยอดรวม: ฿${orderData.items.reduce((sum, item) => sum + item.total, 0).toLocaleString('th-TH')}\n` +
+                           `👤 ผู้สั่งซื้อ: ${orderData.buyerName}`;
+            
+            // In a real application, you would send this to Line API
+            // For now, we'll just log it
+            console.log('Line message:', message);
+        }
+    </script>
+</body>
+</html>

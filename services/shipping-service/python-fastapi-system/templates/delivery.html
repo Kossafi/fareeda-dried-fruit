@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Tracking - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --info-blue: #17A2B8;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .delivery-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .delivery-interface {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .delivery-tracking {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .delivery-map {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            color: var(--text-dark);
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1e7dd 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .map-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: var(--danger-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .map-route {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, var(--success-green) 0%, var(--primary-orange) 100%);
+            animation: routeProgress 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes routeProgress {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+
+        .delivery-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .delivery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .delivery-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .delivery-id {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .delivery-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-preparing {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            color: var(--text-dark);
+        }
+
+        .status-shipping {
+            background: linear-gradient(135deg, var(--info-blue) 0%, #007B8F 100%);
+            color: white;
+        }
+
+        .status-delivered {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .status-cancelled {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            color: white;
+        }
+
+        .delivery-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .detail-text {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--text-brown);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--success-green) 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -2rem;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px var(--shadow-warm);
+        }
+
+        .timeline-marker.completed {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .timeline-marker.current {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            animation: pulse 2s infinite;
+        }
+
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-orange);
+        }
+
+        .timeline-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-description {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-brown);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .search-filters {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            border: 2px solid var(--primary-orange);
+            background: transparent;
+            color: var(--primary-orange);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .filter-tab.active {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .form-control {
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px var(--shadow-soft);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            border-radius: 20px 20px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            .delivery-interface {
+                grid-template-columns: 1fr;
+            }
+            
+            .delivery-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline {
+                padding-left: 1.5rem;
+            }
+            
+            .timeline-marker {
+                left: -1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/barcode">
+                            <i class="fas fa-qrcode"></i> Barcode
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/delivery">
+                            <i class="fas fa-truck"></i> จัดส่ง
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="delivery-card">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-truck text-primary"></i>
+                        ระบบติดตามการจัดส่ง
+                    </h1>
+                    <p class="text-muted mt-2">ติดตามสถานะการจัดส่งไปยัง 100+ สาขา</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-primary" onclick="createDelivery()">
+                            <i class="fas fa-plus"></i> สร้างการจัดส่ง
+                        </button>
+                        <button class="btn btn-success" onclick="refreshDeliveries()">
+                            <i class="fas fa-sync"></i> รีเฟรช
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <div class="stat-number" id="totalDeliveries">0</div>
+                <div class="stat-label">การจัดส่งวันนี้</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number" id="deliveredCount">0</div>
+                <div class="stat-label">จัดส่งสำเร็จ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">รอจัดส่ง</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-route"></i>
+                </div>
+                <div class="stat-number" id="activeRoutes">0</div>
+                <div class="stat-label">เส้นทางเปิด</div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="searchDelivery" placeholder="ค้นหาหมายเลขจัดส่ง, สาขา, หรือลูกค้า">
+                </div>
+                <div class="col-md-6">
+                    <select class="form-control" id="statusFilter">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="preparing">เตรียมของ</option>
+                        <option value="shipping">กำลังจัดส่ง</option>
+                        <option value="delivered">จัดส่งสำเร็จ</option>
+                        <option value="cancelled">ยกเลิก</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-tabs mt-3">
+                <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+                <button class="filter-tab" data-filter="today">วันนี้</button>
+                <button class="filter-tab" data-filter="urgent">ด่วน</button>
+                <button class="filter-tab" data-filter="delayed">ล่าช้า</button>
+            </div>
+        </div>
+
+        <!-- Delivery Interface -->
+        <div class="delivery-interface">
+            <!-- Delivery List -->
+            <div class="delivery-tracking">
+                <h4 class="mb-3">
+                    <i class="fas fa-list"></i> รายการจัดส่ง
+                </h4>
+                <div id="deliveryList">
+                    <!-- Delivery items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Delivery Map -->
+            <div class="delivery-map">
+                <h4 class="mb-3">
+                    <i class="fas fa-map-marked-alt"></i> แผนที่จัดส่ง
+                </h4>
+                <div class="map-container" id="deliveryMap">
+                    <!-- Map markers will be generated here -->
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">เส้นทางจัดส่งแบบ Real-time</small>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span><i class="fas fa-circle text-success"></i> จัดส่งสำเร็จ</span>
+                        <span><i class="fas fa-circle text-warning"></i> กำลังจัดส่ง</span>
+                        <span><i class="fas fa-circle text-danger"></i> ล่าช้า</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Delivery Timeline -->
+        <div class="delivery-card" id="deliveryTimeline" style="display: none;">
+            <h4 class="mb-3">
+                <i class="fas fa-route"></i> ติดตามการจัดส่ง: <span id="selectedDeliveryId">-</span>
+            </h4>
+            <div class="timeline" id="timelineContainer">
+                <!-- Timeline items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Delivery Modal -->
+    <div class="modal fade" id="createDeliveryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">สร้างการจัดส่งใหม่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createDeliveryForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customerName" class="form-label">ชื่อลูกค้า/สาขา</label>
+                                    <input type="text" class="form-control" id="customerName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customerPhone" class="form-label">เบอร์โทร</label>
+                                    <input type="tel" class="form-control" id="customerPhone" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deliveryAddress" class="form-label">ที่อยู่จัดส่ง</label>
+                            <textarea class="form-control" id="deliveryAddress" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="deliveryDate" class="form-label">วันที่จัดส่ง</label>
+                                    <input type="date" class="form-control" id="deliveryDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="deliveryTime" class="form-label">เวลาจัดส่ง</label>
+                                    <input type="time" class="form-control" id="deliveryTime" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deliveryNotes" class="form-label">หมายเหตุ</label>
+                            <textarea class="form-control" id="deliveryNotes" rows="2" placeholder="ข้อมูลเพิ่มเติมสำหรับการจัดส่ง"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDelivery()">สร้างการจัดส่ง</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let deliveries = [];
+        let selectedDelivery = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateMockDeliveries();
+            displayDeliveries();
+            updateStats();
+            initializeMap();
+            initializeFilters();
+        });
+
+        function generateMockDeliveries() {
+            const branches = [
+                'สาขาสยาม', 'สาขาเซ็นทรัล', 'สาขาพรอมพ์ทอง', 'สาขาอโศก', 'สาขาชิดลม',
+                'สาขาเอกมัย', 'สาขาทองหล่อ', 'สาขาสีลม', 'สาขาสุขุมวิท', 'สาขาบางนา'
+            ];
+            
+            const statuses = ['preparing', 'shipping', 'delivered', 'cancelled'];
+            const statusThai = {
+                'preparing': 'เตรียมของ',
+                'shipping': 'กำลังจัดส่ง',
+                'delivered': 'จัดส่งสำเร็จ',
+                'cancelled': 'ยกเลิก'
+            };
+
+            deliveries = [];
+            for (let i = 1; i <= 15; i++) {
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const branch = branches[Math.floor(Math.random() * branches.length)];
+                const delivery = {
+                    id: 'DEL' + String(i).padStart(4, '0'),
+                    customer: branch,
+                    address: `${branch} ชั้น ${Math.floor(Math.random() * 10) + 1} อาคารเซ็นทรัลเวิลด์`,
+                    phone: '02-' + Math.floor(Math.random() * 9000000 + 1000000),
+                    status: status,
+                    statusThai: statusThai[status],
+                    date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH'),
+                    time: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toLocaleTimeString('th-TH'),
+                    items: Math.floor(Math.random() * 10) + 1,
+                    weight: (Math.random() * 50 + 5).toFixed(1),
+                    driver: `คุณ${['สมชาย', 'สมศักดิ์', 'วิชัย', 'ประเสริฐ', 'นิรันดร์'][Math.floor(Math.random() * 5)]}`,
+                    vehicle: `รถ ${['ABC-1234', 'XYZ-5678', 'DEF-9012', 'GHI-3456', 'JKL-7890'][Math.floor(Math.random() * 5)]}`,
+                    priority: Math.random() > 0.7 ? 'urgent' : 'normal'
+                };
+                deliveries.push(delivery);
+            }
+        }
+
+        function displayDeliveries(deliveriesToShow = deliveries) {
+            const deliveryList = document.getElementById('deliveryList');
+            deliveryList.innerHTML = '';
+
+            deliveriesToShow.forEach(delivery => {
+                const deliveryDiv = document.createElement('div');
+                deliveryDiv.className = 'delivery-item';
+                deliveryDiv.onclick = () => selectDelivery(delivery);
+                
+                const priorityIcon = delivery.priority === 'urgent' ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '';
+                
+                deliveryDiv.innerHTML = `
+                    <div class="delivery-header">
+                        <div class="delivery-id">${delivery.id} ${priorityIcon}</div>
+                        <div class="delivery-status status-${delivery.status}">${delivery.statusThai}</div>
+                    </div>
+                    <div class="delivery-details">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="detail-text">
+                                <div class="detail-label">ลูกค้า</div>
+                                <div class="detail-value">${delivery.customer}</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="detail-text">
+                                <div class="detail-label">วันที่</div>
+                                <div class="detail-value">${delivery.date}</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="detail-text">
+                                <div class="detail-label">คนขับ</div>
+                                <div class="detail-value">${delivery.driver}</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-weight"></i>
+                            </div>
+                            <div class="detail-text">
+                                <div class="detail-label">น้ำหนัก</div>
+                                <div class="detail-value">${delivery.weight} กก.</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                deliveryList.appendChild(deliveryDiv);
+            });
+        }
+
+        function selectDelivery(delivery) {
+            selectedDelivery = delivery;
+            document.getElementById('selectedDeliveryId').textContent = delivery.id;
+            document.getElementById('deliveryTimeline').style.display = 'block';
+            
+            // Scroll to timeline
+            document.getElementById('deliveryTimeline').scrollIntoView({ behavior: 'smooth' });
+            
+            generateTimeline(delivery);
+        }
+
+        function generateTimeline(delivery) {
+            const timelineContainer = document.getElementById('timelineContainer');
+            timelineContainer.innerHTML = '';
+            
+            const timelineSteps = [
+                { title: 'รับคำสั่งซื้อ', description: 'รับคำสั่งซื้อจากลูกค้า', completed: true },
+                { title: 'เตรียมสินค้า', description: 'รวบรวมและตรวจสอบสินค้า', completed: delivery.status !== 'preparing', current: delivery.status === 'preparing' },
+                { title: 'แพ็คสินค้า', description: 'บรรจุสินค้าพร้อมส่ง', completed: ['shipping', 'delivered'].includes(delivery.status), current: delivery.status === 'preparing' },
+                { title: 'ออกจัดส่ง', description: `${delivery.driver} ออกจัดส่งด้วย ${delivery.vehicle}`, completed: ['delivered'].includes(delivery.status), current: delivery.status === 'shipping' },
+                { title: 'จัดส่งสำเร็จ', description: 'สินค้าถึงปลายทางเรียบร้อย', completed: delivery.status === 'delivered', current: false }
+            ];
+            
+            timelineSteps.forEach((step, index) => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                
+                const markerClass = step.completed ? 'completed' : (step.current ? 'current' : '');
+                const markerIcon = step.completed ? '<i class="fas fa-check"></i>' : (step.current ? '<i class="fas fa-clock"></i>' : (index + 1));
+                
+                timelineItem.innerHTML = `
+                    <div class="timeline-marker ${markerClass}">
+                        ${markerIcon}
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">${step.title}</div>
+                        <div class="timeline-time">${new Date(Date.now() - (Math.random() * 5 * 60 * 60 * 1000)).toLocaleString('th-TH')}</div>
+                        <div class="timeline-description">${step.description}</div>
+                    </div>
+                `;
+                
+                timelineContainer.appendChild(timelineItem);
+            });
+        }
+
+        function updateStats() {
+            const totalDeliveries = deliveries.length;
+            const deliveredCount = deliveries.filter(d => d.status === 'delivered').length;
+            const pendingCount = deliveries.filter(d => ['preparing', 'shipping'].includes(d.status)).length;
+            const activeRoutes = deliveries.filter(d => d.status === 'shipping').length;
+            
+            document.getElementById('totalDeliveries').textContent = totalDeliveries;
+            document.getElementById('deliveredCount').textContent = deliveredCount;
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('activeRoutes').textContent = activeRoutes;
+        }
+
+        function initializeMap() {
+            const mapContainer = document.getElementById('deliveryMap');
+            mapContainer.innerHTML = '';
+            
+            // Generate random markers
+            for (let i = 0; i < 8; i++) {
+                const marker = document.createElement('div');
+                marker.className = 'map-marker';
+                marker.style.left = Math.random() * 80 + 10 + '%';
+                marker.style.top = Math.random() * 70 + 15 + '%';
+                marker.innerHTML = i + 1;
+                marker.title = `สาขา ${i + 1}`;
+                mapContainer.appendChild(marker);
+            }
+            
+            // Generate routes
+            for (let i = 0; i < 3; i++) {
+                const route = document.createElement('div');
+                route.className = 'map-route';
+                route.style.left = Math.random() * 60 + 10 + '%';
+                route.style.top = Math.random() * 60 + 20 + '%';
+                route.style.width = Math.random() * 30 + 20 + '%';
+                route.style.animationDelay = Math.random() * 2 + 's';
+                mapContainer.appendChild(route);
+            }
+        }
+
+        function initializeFilters() {
+            // Search functionality
+            document.getElementById('searchDelivery').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredDeliveries = deliveries.filter(delivery => 
+                    delivery.id.toLowerCase().includes(searchTerm) ||
+                    delivery.customer.toLowerCase().includes(searchTerm) ||
+                    delivery.driver.toLowerCase().includes(searchTerm)
+                );
+                displayDeliveries(filteredDeliveries);
+            });
+
+            // Status filter
+            document.getElementById('statusFilter').addEventListener('change', function(e) {
+                const status = e.target.value;
+                const filteredDeliveries = status ? 
+                    deliveries.filter(delivery => delivery.status === status) : 
+                    deliveries;
+                displayDeliveries(filteredDeliveries);
+            });
+
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    let filteredDeliveries = deliveries;
+                    
+                    switch(filter) {
+                        case 'today':
+                            const today = new Date().toLocaleDateString('th-TH');
+                            filteredDeliveries = deliveries.filter(d => d.date === today);
+                            break;
+                        case 'urgent':
+                            filteredDeliveries = deliveries.filter(d => d.priority === 'urgent');
+                            break;
+                        case 'delayed':
+                            filteredDeliveries = deliveries.filter(d => d.status === 'shipping' && Math.random() > 0.5);
+                            break;
+                        default:
+                            filteredDeliveries = deliveries;
+                    }
+                    
+                    displayDeliveries(filteredDeliveries);
+                });
+            });
+        }
+
+        function createDelivery() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('deliveryDate').value = today;
+            
+            new bootstrap.Modal(document.getElementById('createDeliveryModal')).show();
+        }
+
+        function saveDelivery() {
+            const form = document.getElementById('createDeliveryForm');
+            const formData = new FormData(form);
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const newDelivery = {
+                id: 'DEL' + String(deliveries.length + 1).padStart(4, '0'),
+                customer: document.getElementById('customerName').value,
+                address: document.getElementById('deliveryAddress').value,
+                phone: document.getElementById('customerPhone').value,
+                status: 'preparing',
+                statusThai: 'เตรียมของ',
+                date: new Date(document.getElementById('deliveryDate').value).toLocaleDateString('th-TH'),
+                time: document.getElementById('deliveryTime').value,
+                items: Math.floor(Math.random() * 10) + 1,
+                weight: (Math.random() * 50 + 5).toFixed(1),
+                driver: 'รอมอบหมาย',
+                vehicle: 'รอมอบหมาย',
+                priority: 'normal'
+            };
+            
+            deliveries.unshift(newDelivery);
+            displayDeliveries();
+            updateStats();
+            
+            bootstrap.Modal.getInstance(document.getElementById('createDeliveryModal')).hide();
+            form.reset();
+            
+            alert(`สร้างการจัดส่ง ${newDelivery.id} สำเร็จ!`);
+        }
+
+        function refreshDeliveries() {
+            // Simulate real-time updates
+            deliveries.forEach(delivery => {
+                if (Math.random() > 0.8) {
+                    const statuses = ['preparing', 'shipping', 'delivered'];
+                    const statusThai = {
+                        'preparing': 'เตรียมของ',
+                        'shipping': 'กำลังจัดส่ง',
+                        'delivered': 'จัดส่งสำเร็จ'
+                    };
+                    
+                    const currentIndex = statuses.indexOf(delivery.status);
+                    if (currentIndex < statuses.length - 1) {
+                        delivery.status = statuses[currentIndex + 1];
+                        delivery.statusThai = statusThai[delivery.status];
+                    }
+                }
+            });
+            
+            displayDeliveries();
+            updateStats();
+            
+            // Show refresh animation
+            const refreshBtn = document.querySelector('.btn-success');
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังรีเฟรช...';
+            
+            setTimeout(() => {
+                refreshBtn.innerHTML = '<i class="fas fa-sync"></i> รีเฟรช';
+            }, 1000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshDeliveries, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .fruit-icon {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-apple-alt text-white text-3xl"></i>
+                    <h1 class="text-white text-2xl font-bold">ระบบจัดการสต๊อคผลไม้อบแห้ง</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-white">ยินดีต้อนรับ!</span>
+                    <button class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+                        <i class="fas fa-user mr-2"></i>เข้าสู่ระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Welcome Section -->
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">ระบบจัดการสต๊อคแบบครบวงจร</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                จัดการสต๊อคผลไม้อบแห้ง การขาย การจัดส่ง และรายงานทั้งหมดในที่เดียว
+                รองรับการทำงานแบบเรียลไทม์สำหรับสาขามากกว่า 100 แห่ง
+            </p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Dashboard Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/dashboard'">
+                <div class="text-center">
+                    <i class="fas fa-chart-line fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">แดชบอร์ด</h3>
+                    <p class="text-gray-600 mb-4">ภาพรวมธุรกิจแบบเรียลไทม์ ยอดขาย สต๊อค และประสิทธิภาพสาขา</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        เข้าดู
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/inventory'">
+                <div class="text-center">
+                    <i class="fas fa-boxes fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">จัดการสต๊อค</h3>
+                    <p class="text-gray-600 mb-4">จัดการสินค้าหลายหน่วย รีแพ็ค และติดตามสต๊อคแบบเรียลไทม์</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        จัดการ
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/sales'">
+                <div class="text-center">
+                    <i class="fas fa-cash-register fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ระบบขาย (POS)</h3>
+                    <p class="text-gray-600 mb-4">บันทึกการขาย คำนวณราคา และหักสต๊อคอัตโนมัติ</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        ขาย
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/delivery'">
+                <div class="text-center">
+                    <i class="fas fa-truck fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ติดตามการจัดส่ง</h3>
+                    <p class="text-gray-600 mb-4">จัดการการจัดส่งไปยังสาขา และติดตามสถานะแบบเรียลไทม์</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        ติดตาม
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barcode Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/barcode'">
+                <div class="text-center">
+                    <i class="fas fa-qrcode fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ระบบบาร์โค้ด</h3>
+                    <p class="text-gray-600 mb-4">สแกนและสร้างบาร์โค้ด ค้นหาสินค้าได้อย่างรวดเร็ว</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        สแกน
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/reports'">
+                <div class="text-center">
+                    <i class="fas fa-chart-pie fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">รายงานและวิเคราะห์</h3>
+                    <p class="text-gray-600 mb-4">รายงานการขาย วิเคราะห์แนวโน้ม และประสิทธิภาพธุรกิจ</p>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-2 rounded-full inline-block">
+                        วิเคราะห์
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch Analytics Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/branch-analytics'">
+                <div class="text-center">
+                    <i class="fas fa-chart-line fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">วิเคราะห์ประสิทธิภาพสาขา</h3>
+                    <p class="text-gray-600 mb-4">วิเคราะห์ประสิทธิภาพ KPIs และการคาดการณ์ด้วย AI</p>
+                    <div class="bg-gradient-to-r from-purple-400 to-blue-400 text-white px-6 py-2 rounded-full inline-block">
+                        AI Analytics
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Branch Operations Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/bulk-branch-operations'">
+                <div class="text-center">
+                    <i class="fas fa-layer-group fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">จัดการสาขาแบบกลุ่ม</h3>
+                    <p class="text-gray-600 mb-4">ดำเนินการหลายสาขาพร้อมกัน อัปเดตราคา โอนสต๊อค</p>
+                    <div class="bg-gradient-to-r from-indigo-400 to-purple-400 text-white px-6 py-2 rounded-full inline-block">
+                        Bulk Operations
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales POS Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/sales-pos'">
+                <div class="text-center">
+                    <i class="fas fa-cash-register fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ระบบบันทึกการขาย POS</h3>
+                    <p class="text-gray-600 mb-4">บันทึกการขายสำหรับสาขาในห้างสรรพสินค้า</p>
+                    <div class="bg-gradient-to-r from-green-400 to-blue-400 text-white px-6 py-2 rounded-full inline-block">
+                        POS System
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Live Feed Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 card-hover cursor-pointer" onclick="window.location.href='/sales-live-feed'">
+                <div class="text-center">
+                    <i class="fas fa-broadcast-tower fruit-icon mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ฟีดการขายเรียลไทม์</h3>
+                    <p class="text-gray-600 mb-4">ติดตามการขายจากทุกสาขาแบบเรียลไทม์</p>
+                    <div class="bg-gradient-to-r from-red-400 to-pink-400 text-white px-6 py-2 rounded-full inline-block">
+                        Live Feed
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">สถิติด่วน</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-500 mb-2">150+</div>
+                    <div class="text-gray-600">สาขาทั้งหมด</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-yellow-500 mb-2">50+</div>
+                    <div class="text-gray-600">ผลไม้อบแห้ง</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-500 mb-2">24/7</div>
+                    <div class="text-gray-600">ติดตามเรียลไทม์</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-500 mb-2">100%</div>
+                    <div class="text-gray-600">ความแม่นยำ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center space-y-4">
+            <div>
+                <button onclick="window.location.href='/purchase'" class="bg-gradient-to-r from-green-400 to-green-600 text-white px-8 py-4 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition mr-4">
+                    <i class="fas fa-shopping-cart mr-3"></i>
+                    ระบบจัดซื้อจากซัพพลายเออร์
+                </button>
+                <button onclick="window.location.href='/goods-receipt'" class="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-8 py-4 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+                    <i class="fas fa-clipboard-check mr-3"></i>
+                    รับสินค้าเข้าคลัง
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 ระบบจัดการสต๊อคผลไม้อบแห้ง. สงวนลิขสิทธิ์.</p>
+            <p class="mt-2 text-gray-400">พัฒนาด้วย ❤️ สำหรับธุรกิจผลไม้อบแห้ง</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // Initialize WebSocket connection
+        const socket = io();
+        
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+        
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add loading animation to cards
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum Definitions
+enum SaleUnit {
+  GRAM     // กรัม
+  PIECE    // ชิ้น
+  KILOGRAM // กิโลกรัม
+  PACKAGE  // แพ็ค
+}
+
+enum StockMovementType {
+  SALE           // การขาย
+  RECEIVE        // การรับสินค้า
+  ADJUSTMENT     // การปรับปรุง
+  TRANSFER_IN    // โอนเข้า
+  TRANSFER_OUT   // โอนออก
+  DAMAGED        // เสียหาย
+  EXPIRED        // หมดอายุ
+}
+
+enum OrderStatus {
+  PENDING        // รอดำเนินการ
+  PROCESSING     // กำลังดำเนินการ
+  SHIPPED        // จัดส่งแล้ว
+  DELIVERED      // ส่งถึงแล้ว
+  CANCELLED      // ยกเลิก
+}
+
+enum UserRole {
+  ADMIN          // ผู้ดูแลระบบ
+  MANAGER        // ผู้จัดการ
+  STAFF          // พนักงานสาขา
+  WAREHOUSE      // พนักงานคลัง
+}
+
+enum BranchStatus {
+  ACTIVE         // เปิดบริการ
+  INACTIVE       // ปิดชั่วคราว
+  MAINTENANCE    // ปรับปรุง
+}
+
+// User Management
+model User {
+  id          String   @id @default(uuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  fullName    String
+  role        UserRole
+  branchId    String?
+  isActive    Boolean  @default(true)
+  lastLogin   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  branch            Branch?            @relation(fields: [branchId], references: [id])
+  salesRecords      SaleRecord[]
+  stockMovements    StockMovement[]
+  purchaseOrders    PurchaseOrder[]
+  stockReceivings   StockReceiving[]
+
+  @@map("users")
+}
+
+// Branch Management
+model Branch {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  name        String
+  location    String
+  mall        String
+  phone       String?
+  status      BranchStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  users            User[]
+  stockLevels      StockLevel[]
+  salesRecords     SaleRecord[]
+  stockMovements   StockMovement[]
+  purchaseOrders   PurchaseOrder[]
+  stockReceivings  StockReceiving[]
+
+  @@map("branches")
+}
+
+// Product Management
+model Product {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  category    String
+  unit        SaleUnit
+  barcode     String?  @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  stockLevels      StockLevel[]
+  stockMovements   StockMovement[]
+  saleItems        SaleItem[]
+  purchaseItems    PurchaseOrderItem[]
+  receivingItems   StockReceivingItem[]
+
+  @@map("products")
+}
+
+// Stock Management (เน้นจำนวนคงเหลือ)
+model StockLevel {
+  id                String   @id @default(uuid())
+  productId         String
+  branchId          String
+  quantity          Int      @default(0)  // จำนวนคงเหลือ
+  threshold         Int      @default(10) // จำนวนขั้นต่ำสำหรับแจ้งเตือน
+  maxLevel          Int      @default(1000) // จำนวนสูงสุด
+  lastMovementAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  product  Product @relation(fields: [productId], references: [id])
+  branch   Branch  @relation(fields: [branchId], references: [id])
+
+  @@unique([productId, branchId])
+  @@map("stock_levels")
+}
+
+// Stock Movement Tracking (ติดตามการเคลื่อนไหวสต๊อค)
+model StockMovement {
+  id                String            @id @default(uuid())
+  productId         String
+  branchId          String
+  type              StockMovementType
+  quantity          Int               // จำนวนที่เปลี่ยนแปลง (+/-)
+  previousQuantity  Int               // จำนวนก่อนหน้า
+  newQuantity       Int               // จำนวนใหม่
+  reference         String?           // อ้างอิงเอกสาร (เช่น sale record id)
+  notes             String?
+  staffId           String
+  timestamp         DateTime          @default(now())
+
+  // Relations
+  product  Product @relation(fields: [productId], references: [id])
+  branch   Branch  @relation(fields: [branchId], references: [id])
+  staff    User    @relation(fields: [staffId], references: [id])
+
+  @@map("stock_movements")
+}
+
+// Sales Recording (เน้นจำนวนสินค้า)
+model SaleRecord {
+  id              String     @id @default(uuid())
+  saleNumber      String     @unique
+  branchId        String
+  staffId         String
+  totalQuantity   Int        // จำนวนรวมทั้งหมด
+  totalItems      Int        // จำนวนรายการสินค้า
+  notes           String?
+  recordedAt      DateTime   @default(now())
+  
+  // Relations
+  branch     Branch     @relation(fields: [branchId], references: [id])
+  staff      User       @relation(fields: [staffId], references: [id])
+  items      SaleItem[]
+
+  @@map("sale_records")
+}
+
+model SaleItem {
+  id            String     @id @default(uuid())
+  saleRecordId  String
+  productId     String
+  quantity      Int        // จำนวนที่ขาย
+  unit          SaleUnit
+  notes         String?
+
+  // Relations
+  saleRecord  SaleRecord @relation(fields: [saleRecordId], references: [id], onDelete: Cascade)
+  product     Product    @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+// Purchase Order Management (การสั่งซื้อจากคลัง)
+model PurchaseOrder {
+  id            String              @id @default(uuid())
+  orderNumber   String              @unique
+  branchId      String
+  requestedBy   String
+  status        OrderStatus         @default(PENDING)
+  totalItems    Int                 // จำนวนรายการที่สั่ง
+  totalQuantity Int                 // จำนวนรวมที่สั่ง
+  notes         String?
+  requestedAt   DateTime            @default(now())
+  processedAt   DateTime?
+  deliveredAt   DateTime?
+
+  // Relations
+  branch        Branch              @relation(fields: [branchId], references: [id])
+  requestedUser User                @relation(fields: [requestedBy], references: [id])
+  items         PurchaseOrderItem[]
+  receiving     StockReceiving?
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id                String        @id @default(uuid())
+  purchaseOrderId   String
+  productId         String
+  requestedQuantity Int           // จำนวนที่สั่ง
+  unit              SaleUnit
+  notes             String?
+
+  // Relations
+  purchaseOrder  PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+// Stock Receiving Management (การรับสินค้าจากคลัง)
+model StockReceiving {
+  id                String                @id @default(uuid())
+  receivingNumber   String                @unique
+  purchaseOrderId   String                @unique
+  branchId          String
+  receivedBy        String
+  totalItemsOrdered Int                   // จำนวนรายการที่สั่ง
+  totalItemsReceived Int                  // จำนวนรายการที่ได้รับ
+  totalQuantityOrdered Int                // จำนวนรวมที่สั่ง
+  totalQuantityReceived Int               // จำนวนรวมที่ได้รับ
+  hasDiscrepancies  Boolean               @default(false)
+  notes             String?
+  receivedAt        DateTime              @default(now())
+
+  // Relations
+  purchaseOrder  PurchaseOrder         @relation(fields: [purchaseOrderId], references: [id])
+  branch         Branch                @relation(fields: [branchId], references: [id])
+  receivedUser   User                  @relation(fields: [receivedBy], references: [id])
+  items          StockReceivingItem[]
+
+  @@map("stock_receivings")
+}
+
+model StockReceivingItem {
+  id                  String         @id @default(uuid())
+  stockReceivingId    String
+  productId           String
+  orderedQuantity     Int            // จำนวนที่สั่ง
+  receivedQuantity    Int            // จำนวนที่ได้รับจริง
+  discrepancy         Int            // ความแตกต่าง
+  unit                SaleUnit
+  notes               String?
+
+  // Relations
+  stockReceiving  StockReceiving @relation(fields: [stockReceivingId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id])
+
+  @@map("stock_receiving_items")
+}
+
+// Sales Analytics (วิเคราะห์การขายตามช่วงเวลา)
+model SalesHourlyPattern {
+  id              String   @id @default(uuid())
+  branchId        String
+  date            DateTime @db.Date
+  hour            Int      // 0-23
+  quantitySold    Int      // จำนวนที่ขายได้
+  transactionCount Int     // จำนวนรายการขาย
+  topProductId    String?  // สินค้าขายดีในช่วงเวลานี้
+  createdAt       DateTime @default(now())
+
+  @@unique([branchId, date, hour])
+  @@map("sales_hourly_patterns")
+}

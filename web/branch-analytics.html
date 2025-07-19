@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วิเคราะห์ประสิทธิภาพสาขา - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.0/index.min.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .analytics-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .kpi-card.excellent::before {
+            background: linear-gradient(90deg, var(--success-green) 0%, #00FF7F 100%);
+        }
+
+        .kpi-card.good::before {
+            background: linear-gradient(90deg, var(--primary-orange) 0%, var(--primary-gold) 100%);
+        }
+
+        .kpi-card.average::before {
+            background: linear-gradient(90deg, var(--warning-amber) 0%, #FFD700 100%);
+        }
+
+        .kpi-card.poor::before {
+            background: linear-gradient(90deg, var(--danger-red) 0%, #FF1493 100%);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 2px solid var(--primary-orange);
+        }
+
+        .filter-btn {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, white 100%);
+            border: 2px solid var(--primary-orange);
+            color: var(--text-dark);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .performance-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .badge-excellent {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .badge-good {
+            background: rgba(255, 165, 0, 0.2);
+            color: var(--primary-orange);
+        }
+
+        .badge-average {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .badge-poor {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .trend-up {
+            color: var(--success-green);
+        }
+
+        .trend-down {
+            color: var(--danger-red);
+        }
+
+        .trend-stable {
+            color: var(--warning-amber);
+        }
+
+        .ranking-list {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .ranking-item:hover {
+            background: var(--bg-light-yellow);
+            transform: translateX(5px);
+        }
+
+        .ranking-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: white; }
+        .rank-2 { background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%); color: white; }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); color: white; }
+        .rank-other { background: linear-gradient(135deg, var(--bg-light-yellow) 0%, white 100%); color: var(--text-dark); }
+
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            margin-top: 1.5rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+            color: white;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .table th {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, var(--bg-cream) 100%);
+            border: none;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: rgba(255, 215, 0, 0.1);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 248, 220, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .ai-insights {
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--success-green);
+            margin-bottom: 1.5rem;
+        }
+
+        .forecast-section {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid #007bff;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>วิเคราะห์ประสิทธิภาพสาขา
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/dashboard">
+                            <i class="fas fa-home me-1"></i>หน้าหลัก
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/branch-management">
+                            <i class="fas fa-store me-1"></i>จัดการสาขา
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/branch-inventory">
+                            <i class="fas fa-boxes me-1"></i>คลังสินค้าสาขา
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/branch-delivery-routes">
+                            <i class="fas fa-route me-1"></i>เส้นทางจัดส่ง
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">กำลังโหลด...</span>
+            </div>
+            <p class="mt-3 text-dark">กำลังประมวลผลข้อมูล...</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">ช่วงเวลา:</label>
+                    <div>
+                        <button class="filter-btn active" onclick="setTimeRange('today')">วันนี้</button>
+                        <button class="filter-btn" onclick="setTimeRange('week')">สัปดาห์นี้</button>
+                        <button class="filter-btn" onclick="setTimeRange('month')">เดือนนี้</button>
+                        <button class="filter-btn" onclick="setTimeRange('quarter')">ไตรมาสนี้</button>
+                        <button class="filter-btn" onclick="setTimeRange('year')">ปีนี้</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">เปรียบเทียบ:</label>
+                    <select class="form-select" id="comparisonSelect" onchange="updateComparison()">
+                        <option value="previous">เปรียบเทียบช่วงก่อนหน้า</option>
+                        <option value="lastYear">เปรียบเทียบปีที่แล้ว</option>
+                        <option value="average">เปรียบเทียบค่าเฉลี่ย</option>
+                        <option value="target">เปรียบเทียบเป้าหมาย</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">กลุ่มสาขา:</label>
+                    <select class="form-select" id="branchGroupSelect" onchange="filterByGroup()">
+                        <option value="all">ทุกสาขา</option>
+                        <option value="region-north">ภาคเหนือ</option>
+                        <option value="region-central">ภาคกลาง</option>
+                        <option value="region-northeast">ภาคอีสาน</option>
+                        <option value="region-south">ภาคใต้</option>
+                        <option value="size-large">สาขาใหญ่</option>
+                        <option value="size-medium">สาขากลาง</option>
+                        <option value="size-small">สาขาเล็ก</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Performance Indicators -->
+        <div class="analytics-container">
+            <h4 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>ตัวชี้วัดหลัก (KPIs)</h4>
+            <div class="row">
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card excellent">
+                        <div class="kpi-value text-success" id="overallScore">87.5</div>
+                        <div class="kpi-label">คะแนนรวม</div>
+                        <div class="trend-indicator trend-up mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>+2.3%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card good">
+                        <div class="kpi-value text-primary" id="avgRevenue">₿2.4M</div>
+                        <div class="kpi-label">ยอดขายเฉลี่ย</div>
+                        <div class="trend-indicator trend-up mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>+5.7%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card average">
+                        <div class="kpi-value text-warning" id="profitMargin">18.2%</div>
+                        <div class="kpi-label">อัตรากำไร</div>
+                        <div class="trend-indicator trend-stable mt-2">
+                            <i class="fas fa-minus me-1"></i>-0.1%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card good">
+                        <div class="kpi-value text-info" id="customerSat">4.3</div>
+                        <div class="kpi-label">ความพึงพอใจ</div>
+                        <div class="trend-indicator trend-up mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>+0.2
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card excellent">
+                        <div class="kpi-value text-success" id="efficiency">92.8%</div>
+                        <div class="kpi-label">ประสิทธิภาพ</div>
+                        <div class="trend-indicator trend-up mt-2">
+                            <i class="fas fa-arrow-up me-1"></i>+1.5%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 mb-3">
+                    <div class="kpi-card poor">
+                        <div class="kpi-value text-danger" id="stockout">3.2%</div>
+                        <div class="kpi-label">สินค้าหมด</div>
+                        <div class="trend-indicator trend-down mt-2">
+                            <i class="fas fa-arrow-down me-1"></i>-0.8%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="ai-insights">
+            <h5 class="mb-3"><i class="fas fa-robot me-2"></i>ข้อเสนอแนะจาก AI</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-start">
+                        <div class="text-success me-3 mt-1">
+                            <i class="fas fa-lightbulb fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-success">โอกาสการเติบโต</h6>
+                            <p class="mb-0 small">สาขาในภาคอีสานมีศักยภาพเติบโต 15% หากเพิ่มสินค้าประเภทผลไม้เมืองหนาว</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-start">
+                        <div class="text-warning me-3 mt-1">
+                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-warning">จุดที่ต้องปรับปรุง</h6>
+                            <p class="mb-0 small">สาขากลุ่มเล็กควรปรับปรุงระบบสต๊อคเพื่อลดการขาดสินค้า 40%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-start">
+                        <div class="text-info me-3 mt-1">
+                            <i class="fas fa-chart-line fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-info">แนวโน้ม</h6>
+                            <p class="mb-0 small">ยอดขายโดยรวมคาดการณ์เติบโต 8.5% ในไตรมาสหน้า</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-area me-2"></i>แนวโน้มประสิทธิภาพรายเดือน</h5>
+                    <canvas id="performanceChart" height="100"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <div class="ranking-list">
+                    <h5 class="mb-3"><i class="fas fa-trophy me-2"></i>อันดับสาขา TOP 10</h5>
+                    <div id="topBranchesRanking">
+                        <!-- Dynamic ranking will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>การกระจายตัวของประสิทธิภาพ</h5>
+                    <canvas id="distributionChart" height="120"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>เปรียบเทียบตามภูมิภาค</h5>
+                    <canvas id="regionChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forecast Section -->
+        <div class="forecast-section">
+            <h5 class="mb-3"><i class="fas fa-crystal-ball me-2"></i>การคาดการณ์ 3 เดือนข้างหน้า</h5>
+            <div class="row">
+                <div class="col-lg-8">
+                    <canvas id="forecastChart" height="80"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="p-3">
+                        <h6 class="text-primary mb-3">ผลการคาดการณ์</h6>
+                        <div class="mb-2">
+                            <strong>ยอดขายรวม:</strong> 
+                            <span class="text-success">+12.3%</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>จำนวนสาขาที่เติบโต:</strong> 
+                            <span class="text-info">89%</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>ความเสี่ยง:</strong> 
+                            <span class="text-warning">ปานกลาง</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>ความมั่นใจของแบบจำลอง:</strong> 
+                            <span class="text-success">94.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Comparison Table -->
+        <div class="comparison-table">
+            <h5 class="mb-3"><i class="fas fa-table me-2"></i>ตารางเปรียบเทียบประสิทธิภาพรายสาขา</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>อันดับ</th>
+                            <th>สาขา</th>
+                            <th>ภูมิภาค</th>
+                            <th>คะแนนรวม</th>
+                            <th>ยอดขาย</th>
+                            <th>อัตรากำไร</th>
+                            <th>ความพึงพอใจ</th>
+                            <th>ประสิทธิภาพ</th>
+                            <th>แนวโน้ม</th>
+                            <th>การดำเนินการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <!-- Dynamic table rows will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h5 class="mb-3"><i class="fas fa-download me-2"></i>ส่งออกรายงาน</h5>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="mb-0 text-muted">ส่งออกรายงานการวิเคราะห์ประสิทธิภาพสาขาในรูปแบบต่างๆ</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn-export" onclick="exportReport('pdf')">
+                        <i class="fas fa-file-pdf me-1"></i>PDF
+                    </button>
+                    <button class="btn-export" onclick="exportReport('excel')">
+                        <i class="fas fa-file-excel me-1"></i>Excel
+                    </button>
+                    <button class="btn-export" onclick="exportReport('powerbi')">
+                        <i class="fas fa-chart-bar me-1"></i>Power BI
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTimeRange = 'month';
+        let currentComparison = 'previous';
+        let currentGroup = 'all';
+        let performanceChart, distributionChart, regionChart, forecastChart;
+
+        // Sample data
+        const sampleBranches = [
+            { id: 'BR001', name: 'สาขาเซ็นทรัลเวิลด์', region: 'ภาคกลาง', score: 95.2, revenue: 3200000, profit: 22.5, satisfaction: 4.8, efficiency: 97.2, trend: 'up' },
+            { id: 'BR002', name: 'สาขาเชียงใหม่นิมมาน', region: 'ภาคเหนือ', score: 92.8, revenue: 2800000, profit: 24.1, satisfaction: 4.7, efficiency: 94.5, trend: 'up' },
+            { id: 'BR003', name: 'สาขาภูเก็ตบิ๊กซี', region: 'ภาคใต้', score: 90.1, revenue: 2900000, profit: 21.8, satisfaction: 4.6, efficiency: 93.2, trend: 'stable' },
+            { id: 'BR004', name: 'สาขาขอนแก่นเซ็นทรัล', region: 'ภาคอีสาน', score: 88.7, revenue: 2400000, profit: 20.3, satisfaction: 4.5, efficiency: 91.8, trend: 'up' },
+            { id: 'BR005', name: 'สาขาหาดใหญ่ลี การ์เดน', region: 'ภาคใต้', score: 86.3, revenue: 2200000, profit: 19.7, satisfaction: 4.4, efficiency: 89.5, trend: 'down' },
+            { id: 'BR006', name: 'สาขาอุดรธานีซีคอน', region: 'ภาคอีสาน', score: 84.9, revenue: 2100000, profit: 18.9, satisfaction: 4.3, efficiency: 87.2, trend: 'stable' },
+            { id: 'BR007', name: 'สาขาสมุทรปราการเมกา', region: 'ภาคกลาง', score: 83.5, revenue: 2000000, profit: 18.2, satisfaction: 4.2, efficiency: 85.8, trend: 'up' },
+            { id: 'BR008', name: 'สาขานครราชสีมาเดอะมอลล์', region: 'ภาคอีสาน', score: 82.1, revenue: 1900000, profit: 17.5, satisfaction: 4.1, efficiency: 84.3, trend: 'down' },
+            { id: 'BR009', name: 'สาขาสุราษฎร์ธานีเซ็นทรัล', region: 'ภาคใต้', score: 80.7, revenue: 1800000, profit: 16.8, satisfaction: 4.0, efficiency: 82.9, trend: 'stable' },
+            { id: 'BR010', name: 'สาขาลพบุรีโรบินสัน', region: 'ภาคกลาง', score: 79.3, revenue: 1700000, profit: 16.1, satisfaction: 3.9, efficiency: 81.5, trend: 'down' }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoading(true);
+            setTimeout(() => {
+                initializeCharts();
+                loadAnalyticsData();
+                updateRankings();
+                updateComparisonTable();
+                showLoading(false);
+            }, 1500);
+        });
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.add('show');
+            } else {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function setTimeRange(range) {
+            currentTimeRange = range;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            showLoading(true);
+            setTimeout(() => {
+                loadAnalyticsData();
+                updateCharts();
+                showLoading(false);
+            }, 800);
+        }
+
+        function updateComparison() {
+            currentComparison = document.getElementById('comparisonSelect').value;
+            showLoading(true);
+            setTimeout(() => {
+                updateCharts();
+                updateComparisonTable();
+                showLoading(false);
+            }, 600);
+        }
+
+        function filterByGroup() {
+            currentGroup = document.getElementById('branchGroupSelect').value;
+            showLoading(true);
+            setTimeout(() => {
+                loadAnalyticsData();
+                updateRankings();
+                updateComparisonTable();
+                showLoading(false);
+            }, 700);
+        }
+
+        function initializeCharts() {
+            // Performance Trend Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(perfCtx, {
+                type: 'line',
+                data: {
+                    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+                    datasets: [{
+                        label: 'คะแนนประสิทธิภาพเฉลี่ย',
+                        data: [82.1, 83.5, 85.2, 84.8, 86.1, 87.3, 88.5, 87.9, 89.2, 88.7, 90.1, 87.5],
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'เป้าหมาย',
+                        data: [85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85],
+                        borderColor: '#32CD32',
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 75,
+                            max: 95
+                        }
+                    }
+                }
+            });
+
+            // Distribution Chart
+            const distCtx = document.getElementById('distributionChart').getContext('2d');
+            distributionChart = new Chart(distCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ดีเยี่ยม (90-100)', 'ดี (80-89)', 'ปานกลาง (70-79)', 'ต้องปรับปรุง (<70)'],
+                    datasets: [{
+                        data: [35, 45, 15, 5],
+                        backgroundColor: ['#32CD32', '#FFA500', '#FFBF00', '#FF6B6B'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Region Comparison Chart
+            const regionCtx = document.getElementById('regionChart').getContext('2d');
+            regionChart = new Chart(regionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้'],
+                    datasets: [{
+                        label: 'คะแนนเฉลี่ย',
+                        data: [88.5, 86.3, 84.2, 87.1],
+                        backgroundColor: ['rgba(255, 215, 0, 0.8)', 'rgba(255, 165, 0, 0.8)', 'rgba(255, 191, 0, 0.8)', 'rgba(255, 140, 0, 0.8)'],
+                        borderColor: ['#FFD700', '#FFA500', '#FFBF00', '#FF8C00'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 75,
+                            max: 95
+                        }
+                    }
+                }
+            });
+
+            // Forecast Chart
+            const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+            forecastChart = new Chart(forecastCtx, {
+                type: 'line',
+                data: {
+                    labels: ['ปัจจุบัน', 'เดือน 1', 'เดือน 2', 'เดือน 3'],
+                    datasets: [{
+                        label: 'คาดการณ์ยอดขาย (ล้านบาท)',
+                        data: [240, 252, 265, 278],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'คาดการณ์คะแนนประสิทธิภาพ',
+                        data: [87.5, 88.2, 89.1, 90.3],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'ยอดขาย (ล้านบาท)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'คะแนนประสิทธิภาพ'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            min: 85,
+                            max: 95
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadAnalyticsData() {
+            // Simulate dynamic KPI updates based on filters
+            const kpis = {
+                today: { score: 89.2, revenue: 2.6, profit: 19.5, satisfaction: 4.4, efficiency: 94.1, stockout: 2.8 },
+                week: { score: 88.7, revenue: 2.5, profit: 19.1, satisfaction: 4.3, efficiency: 93.5, stockout: 3.1 },
+                month: { score: 87.5, revenue: 2.4, profit: 18.2, satisfaction: 4.3, efficiency: 92.8, stockout: 3.2 },
+                quarter: { score: 86.8, revenue: 2.3, profit: 17.8, satisfaction: 4.2, efficiency: 91.9, stockout: 3.5 },
+                year: { score: 85.9, revenue: 2.2, profit: 17.1, satisfaction: 4.1, efficiency: 90.8, stockout: 3.8 }
+            };
+
+            const data = kpis[currentTimeRange];
+            
+            document.getElementById('overallScore').textContent = data.score;
+            document.getElementById('avgRevenue').textContent = `₿${data.revenue}M`;
+            document.getElementById('profitMargin').textContent = `${data.profit}%`;
+            document.getElementById('customerSat').textContent = data.satisfaction;
+            document.getElementById('efficiency').textContent = `${data.efficiency}%`;
+            document.getElementById('stockout').textContent = `${data.stockout}%`;
+        }
+
+        function updateCharts() {
+            // Update chart data based on current filters
+            // This would typically fetch new data from API
+            performanceChart.update();
+            distributionChart.update();
+            regionChart.update();
+            forecastChart.update();
+        }
+
+        function updateRankings() {
+            const rankingContainer = document.getElementById('topBranchesRanking');
+            let filteredBranches = [...sampleBranches];
+            
+            // Apply group filter
+            if (currentGroup !== 'all') {
+                if (currentGroup.startsWith('region-')) {
+                    const region = currentGroup.replace('region-', '');
+                    const regionMap = {
+                        'north': 'ภาคเหนือ',
+                        'central': 'ภาคกลาง', 
+                        'northeast': 'ภาคอีสาน',
+                        'south': 'ภาคใต้'
+                    };
+                    filteredBranches = filteredBranches.filter(b => b.region === regionMap[region]);
+                }
+            }
+            
+            // Sort by score and take top 10
+            filteredBranches.sort((a, b) => b.score - a.score);
+            filteredBranches = filteredBranches.slice(0, 10);
+            
+            rankingContainer.innerHTML = '';
+            
+            filteredBranches.forEach((branch, index) => {
+                const rankClass = index < 3 ? `rank-${index + 1}` : 'rank-other';
+                const badgeClass = branch.score >= 90 ? 'badge-excellent' : 
+                                  branch.score >= 80 ? 'badge-good' :
+                                  branch.score >= 70 ? 'badge-average' : 'badge-poor';
+                
+                const trendIcon = branch.trend === 'up' ? 'fa-arrow-up text-success' :
+                                 branch.trend === 'down' ? 'fa-arrow-down text-danger' :
+                                 'fa-minus text-warning';
+                
+                const rankingItem = `
+                    <div class="ranking-item" onclick="viewBranchDetails('${branch.id}')">
+                        <div class="ranking-number ${rankClass}">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${branch.name}</h6>
+                            <div class="d-flex align-items-center">
+                                <span class="performance-badge ${badgeClass} me-2">
+                                    ${branch.score}%
+                                </span>
+                                <i class="fas ${trendIcon}"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                rankingContainer.innerHTML += rankingItem;
+            });
+        }
+
+        function updateComparisonTable() {
+            const tableBody = document.getElementById('comparisonTableBody');
+            let filteredBranches = [...sampleBranches];
+            
+            // Apply group filter
+            if (currentGroup !== 'all') {
+                if (currentGroup.startsWith('region-')) {
+                    const region = currentGroup.replace('region-', '');
+                    const regionMap = {
+                        'north': 'ภาคเหนือ',
+                        'central': 'ภาคกลาง',
+                        'northeast': 'ภาคอีสาน', 
+                        'south': 'ภาคใต้'
+                    };
+                    filteredBranches = filteredBranches.filter(b => b.region === regionMap[region]);
+                }
+            }
+            
+            // Sort by score
+            filteredBranches.sort((a, b) => b.score - a.score);
+            
+            tableBody.innerHTML = '';
+            
+            filteredBranches.forEach((branch, index) => {
+                const badgeClass = branch.score >= 90 ? 'badge-excellent' : 
+                                  branch.score >= 80 ? 'badge-good' :
+                                  branch.score >= 70 ? 'badge-average' : 'badge-poor';
+                
+                const trendIcon = branch.trend === 'up' ? 'fa-arrow-up text-success' :
+                                 branch.trend === 'down' ? 'fa-arrow-down text-danger' :
+                                 'fa-minus text-warning';
+                
+                const row = `
+                    <tr>
+                        <td><strong>${index + 1}</strong></td>
+                        <td>
+                            <div class="fw-bold">${branch.name}</div>
+                            <small class="text-muted">${branch.id}</small>
+                        </td>
+                        <td>${branch.region}</td>
+                        <td>
+                            <span class="performance-badge ${badgeClass}">
+                                ${branch.score}%
+                            </span>
+                        </td>
+                        <td>₿${(branch.revenue / 1000000).toFixed(1)}M</td>
+                        <td>${branch.profit}%</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-1">${branch.satisfaction}</span>
+                                <div class="text-warning">
+                                    ${'★'.repeat(Math.floor(branch.satisfaction))}
+                                </div>
+                            </div>
+                        </td>
+                        <td>${branch.efficiency}%</td>
+                        <td>
+                            <i class="fas ${trendIcon}"></i>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewBranchDetails('${branch.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning ms-1" onclick="optimizeBranch('${branch.id}')">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function viewBranchDetails(branchId) {
+            window.open(`/branch-details?id=${branchId}&analytics=true`, '_blank');
+        }
+
+        function optimizeBranch(branchId) {
+            alert(`เปิดระบบปรับปรุงประสิทธิภาพสำหรับสาขา: ${branchId}`);
+        }
+
+        function exportReport(format) {
+            showLoading(true);
+            
+            // Simulate export process
+            setTimeout(() => {
+                const filename = `branch_analytics_${currentTimeRange}_${new Date().toISOString().split('T')[0]}`;
+                
+                switch(format) {
+                    case 'pdf':
+                        alert(`กำลังส่งออกรายงาน PDF: ${filename}.pdf`);
+                        break;
+                    case 'excel':
+                        alert(`กำลังส่งออกรายงาน Excel: ${filename}.xlsx`);
+                        break;
+                    case 'powerbi':
+                        alert(`กำลังเชื่อมต่อ Power BI Dashboard...`);
+                        break;
+                }
+                
+                showLoading(false);
+            }, 2000);
+        }
+
+        // Auto-refresh data every 5 minutes
+        setInterval(() => {
+            loadAnalyticsData();
+            updateCharts();
+        }, 300000);
+    </script>
+</body>
+</html>

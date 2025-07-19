@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ฟีดการขายเรียลไทม์ - ระบบจัดการผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .live-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: var(--success-green);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-orange) 0%, var(--primary-gold) 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            font-weight: 500;
+        }
+
+        .sales-feed {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .sale-item {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, white 100%);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-orange);
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: slideInRight 0.5s ease forwards;
+        }
+
+        .sale-item.new {
+            border-left-color: var(--success-green);
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.1) 0%, white 100%);
+            animation: newItemGlow 2s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes newItemGlow {
+            0% { box-shadow: 0 0 0 0 rgba(50, 205, 50, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(50, 205, 50, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(50, 205, 50, 0); }
+        }
+
+        .sale-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .sale-info {
+            flex-grow: 1;
+        }
+
+        .sale-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--success-green);
+        }
+
+        .sale-meta {
+            font-size: 0.8rem;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .sale-items {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .branch-filter {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 2px solid var(--primary-orange);
+        }
+
+        .filter-btn {
+            background: linear-gradient(135deg, var(--bg-light-yellow) 0%, white 100%);
+            border: 2px solid var(--primary-orange);
+            color: var(--text-dark);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .controls-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success-green);
+            animation: pulse 1s infinite;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-brown);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .notification-sound {
+            display: none;
+        }
+
+        .top-products {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .product-rank {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            background: var(--bg-light-yellow);
+            transition: all 0.3s ease;
+        }
+
+        .product-rank:hover {
+            background: white;
+            box-shadow: 0 2px 8px var(--shadow-soft);
+        }
+
+        .rank-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary-orange);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .rank-1 { background: #FFD700; color: var(--text-dark); }
+        .rank-2 { background: #C0C0C0; }
+        .rank-3 { background: #CD7F32; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sale-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-broadcast-tower me-2"></i>ฟีดการขายเรียลไทม์
+            </a>
+            <div class="live-indicator pulse">
+                <i class="fas fa-circle me-2" style="font-size: 0.7rem;"></i>
+                LIVE
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Control Section -->
+        <div class="controls-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="auto-refresh">
+                        <div class="refresh-indicator"></div>
+                        <span>อัพเดทอัตโนมัติทุก 5 วินาที</span>
+                        <button class="btn btn-sm btn-outline-primary ms-3" onclick="toggleAutoRefresh()">
+                            <i class="fas fa-pause" id="refreshIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="small text-muted">เสียงแจ้งเตือน:</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="soundToggle" checked>
+                            <label class="form-check-label" for="soundToggle">
+                                <i class="fas fa-volume-up"></i>
+                            </label>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="exportData()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="live-container">
+            <h4 class="mb-3"><i class="fas fa-chart-line me-2"></i>สถิติการขายวันนี้</h4>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value text-success" id="totalSales">฿0</div>
+                    <div class="stat-label">ยอดขายรวม</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value text-primary" id="totalTransactions">0</div>
+                    <div class="stat-label">จำนวนรายการ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value text-warning" id="avgTicket">฿0</div>
+                    <div class="stat-label">ยอดเฉลี่ย/รายการ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value text-info" id="activeBranches">0</div>
+                    <div class="stat-label">สาขาที่มีการขาย</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branch Filter -->
+        <div class="branch-filter">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">กรองตามสาขา:</label>
+                </div>
+                <div class="col-md-9">
+                    <button class="filter-btn active" onclick="filterBranch('all')">ทุกสาขา</button>
+                    <button class="filter-btn" onclick="filterBranch('central-westgate')">เซ็นทรัล เวสต์เกต</button>
+                    <button class="filter-btn" onclick="filterBranch('siam-paragon')">สยาม พารากอน</button>
+                    <button class="filter-btn" onclick="filterBranch('emquartier')">เอ็มควอเทียร์</button>
+                    <button class="filter-btn" onclick="filterBranch('iconsiam')">ไอคอนสยาม</button>
+                    <button class="filter-btn" onclick="filterBranch('central-ladprao')">เซ็นทรัล ลาดพร้าว</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Live Sales Feed -->
+            <div class="col-lg-8">
+                <div class="live-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-stream me-2"></i>รายการขายล่าสุด</h4>
+                        <span class="badge bg-success">อัพเดทเรียลไทม์</span>
+                    </div>
+                    
+                    <div class="sales-feed" id="salesFeed">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <p>กำลังรอข้อมูลการขาย...</p>
+                            <small class="text-muted">ข้อมูลจะปรากฏเมื่อมีการบันทึกการขายจากสาขา</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="col-lg-4">
+                <!-- Sales Chart -->
+                <div class="chart-container">
+                    <h6 class="mb-3"><i class="fas fa-chart-area me-2"></i>ยอดขายรายชั่วโมง</h6>
+                    <canvas id="hourlyChart" height="200"></canvas>
+                </div>
+
+                <!-- Top Products -->
+                <div class="top-products">
+                    <h6 class="mb-3"><i class="fas fa-medal me-2"></i>สินค้าขายดี</h6>
+                    <div id="topProducts">
+                        <div class="product-rank">
+                            <div class="rank-number rank-1">1</div>
+                            <div>
+                                <div class="fw-bold">มะม่วงอบแห้ง</div>
+                                <small class="text-muted">45 รายการ - ฿11,250</small>
+                            </div>
+                        </div>
+                        <div class="product-rank">
+                            <div class="rank-number rank-2">2</div>
+                            <div>
+                                <div class="fw-bold">กล้วยอบแห้ง</div>
+                                <small class="text-muted">38 รายการ - ฿6,840</small>
+                            </div>
+                        </div>
+                        <div class="product-rank">
+                            <div class="rank-number rank-3">3</div>
+                            <div>
+                                <div class="fw-bold">สับปะรดอบแห้ง</div>
+                                <small class="text-muted">32 รายการ - ฿6,400</small>
+                            </div>
+                        </div>
+                        <div class="product-rank">
+                            <div class="rank-number">4</div>
+                            <div>
+                                <div class="fw-bold">ถั่วผสม</div>
+                                <small class="text-muted">28 รายการ - ฿8,400</small>
+                            </div>
+                        </div>
+                        <div class="product-rank">
+                            <div class="rank-number">5</div>
+                            <div>
+                                <div class="fw-bold">มะพร้าวอบแห้ง</div>
+                                <small class="text-muted">25 รายการ - ฿3,750</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Sound -->
+    <audio class="notification-sound" id="notificationSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMSAz2HzO/dcis"/>
+    </audio>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // Global variables
+        let socket = null;
+        let salesData = [];
+        let autoRefreshEnabled = true;
+        let refreshInterval = null;
+        let currentFilter = 'all';
+        let soundEnabled = true;
+        let hourlyChart = null;
+
+        // Sample sales data for demo
+        let sampleSales = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupSocketConnection();
+            initializeChart();
+            startAutoRefresh();
+            generateSampleData();
+        });
+
+        function initializeApp() {
+            console.log('🔴 เริ่มต้นระบบ Live Sales Feed');
+            
+            // Sound toggle
+            document.getElementById('soundToggle').addEventListener('change', function() {
+                soundEnabled = this.checked;
+            });
+        }
+
+        function setupSocketConnection() {
+            try {
+                socket = io();
+                
+                socket.on('connect', () => {
+                    console.log('🟢 เชื่อมต่อ Socket.IO สำเร็จ');
+                    socket.emit('join-room', 'sales-feed');
+                });
+
+                socket.on('disconnect', () => {
+                    console.log('🔴 การเชื่อมต่อ Socket.IO ขาด');
+                });
+
+                socket.on('sale-recorded', (data) => {
+                    console.log('📊 รับข้อมูลการขายใหม่:', data);
+                    addNewSale(data);
+                    updateStatistics();
+                    playNotificationSound();
+                });
+
+                socket.on('sales-update', (data) => {
+                    console.log('📈 อัพเดทข้อมูลการขาย:', data);
+                    salesData = data;
+                    updateDisplay();
+                });
+
+            } catch (error) {
+                console.error('Socket.IO Error:', error);
+            }
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            hourlyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: 'ยอดขาย (บาท)',
+                        data: Array(24).fill(0),
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            
+            refreshInterval = setInterval(() => {
+                if (autoRefreshEnabled) {
+                    fetchLatestSales();
+                    // Simulate new sales for demo
+                    if (Math.random() > 0.7) {
+                        generateNewSale();
+                    }
+                }
+            }, 5000);
+        }
+
+        async function fetchLatestSales() {
+            try {
+                const response = await fetch('/api/sales/live');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        updateSalesData(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching sales data:', error);
+            }
+        }
+
+        function generateSampleData() {
+            const branches = [
+                'เซ็นทรัล เวสต์เกต',
+                'สยาม พารากอน', 
+                'เอ็มควอเทียร์',
+                'ไอคอนสยาม',
+                'เซ็นทรัล ลาดพร้าว'
+            ];
+            
+            const employees = [
+                'นายสมชาย ใจดี',
+                'นางสาวมาลี รักงาน',
+                'นายวิชัย ขยัน',
+                'นางสุดา อุตสาห์',
+                'นายประยุทธ สู้งาน'
+            ];
+
+            const products = [
+                { name: 'มะม่วงอบแห้ง', price: 250 },
+                { name: 'กล้วยอบแห้ง', price: 180 },
+                { name: 'สับปะรดอบแห้ง', price: 200 },
+                { name: 'ถั่วผสม', price: 300 },
+                { name: 'มะพร้าวอบแห้ง', price: 150 }
+            ];
+
+            // Generate initial sample sales
+            for (let i = 0; i < 10; i++) {
+                const branch = branches[Math.floor(Math.random() * branches.length)];
+                const employee = employees[Math.floor(Math.random() * employees.length)];
+                const product = products[Math.floor(Math.random() * products.length)];
+                const quantity = Math.floor(Math.random() * 500) + 100;
+                const total = (quantity / 1000) * product.price;
+                const timestamp = new Date(Date.now() - Math.random() * 3600000);
+
+                sampleSales.push({
+                    saleId: `SALE${Date.now()}${i}`,
+                    employeeName: employee,
+                    branchName: branch,
+                    items: [{
+                        name: product.name,
+                        quantity: quantity,
+                        unit: 'กรัม',
+                        total: total
+                    }],
+                    totalAmount: total,
+                    timestamp: timestamp.toISOString()
+                });
+            }
+
+            updateSalesData(sampleSales);
+        }
+
+        function generateNewSale() {
+            const branches = [
+                'เซ็นทรัล เวสต์เกต',
+                'สยาม พารากอน', 
+                'เอ็มควอเทียร์',
+                'ไอคอนสยาม',
+                'เซ็นทรัล ลาดพร้าว'
+            ];
+            
+            const employees = [
+                'นายสมชาย ใจดี',
+                'นางสาวมาลี รักงาน',
+                'นายวิชัย ขยัน',
+                'นางสุดา อุตสาห์',
+                'นายประยุทธ สู้งาน'
+            ];
+
+            const products = [
+                { name: 'มะม่วงอบแห้ง', price: 250 },
+                { name: 'กล้วยอบแห้ง', price: 180 },
+                { name: 'สับปะรดอบแห้ง', price: 200 },
+                { name: 'ถั่วผสม', price: 300 },
+                { name: 'มะพร้าวอบแห้ง', price: 150 }
+            ];
+
+            const branch = branches[Math.floor(Math.random() * branches.length)];
+            const employee = employees[Math.floor(Math.random() * employees.length)];
+            const product = products[Math.floor(Math.random() * products.length)];
+            const quantity = Math.floor(Math.random() * 500) + 100;
+            const total = (quantity / 1000) * product.price;
+
+            const newSale = {
+                saleId: `SALE${Date.now()}`,
+                employeeName: employee,
+                branchName: branch,
+                items: [{
+                    name: product.name,
+                    quantity: quantity,
+                    unit: 'กรัม',
+                    total: total
+                }],
+                totalAmount: total,
+                timestamp: new Date().toISOString(),
+                isNew: true
+            };
+
+            addNewSale(newSale);
+            updateStatistics();
+            playNotificationSound();
+        }
+
+        function addNewSale(sale) {
+            // Add to beginning of array
+            salesData.unshift(sale);
+            
+            // Keep only latest 50 sales
+            if (salesData.length > 50) {
+                salesData = salesData.slice(0, 50);
+            }
+            
+            updateSalesDisplay();
+        }
+
+        function updateSalesData(data) {
+            salesData = data;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            updateSalesDisplay();
+            updateStatistics();
+            updateChart();
+        }
+
+        function updateSalesDisplay() {
+            const feedContainer = document.getElementById('salesFeed');
+            
+            // Filter data
+            let filteredSales = salesData;
+            if (currentFilter !== 'all') {
+                filteredSales = salesData.filter(sale => 
+                    sale.branchName.toLowerCase().includes(currentFilter.replace('-', ' '))
+                );
+            }
+
+            if (filteredSales.length === 0) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <p>ไม่มีข้อมูลการขาย</p>
+                        <small class="text-muted">ลองเปลี่ยนตัวกรองหรือรอข้อมูลใหม่</small>
+                    </div>
+                `;
+                return;
+            }
+
+            feedContainer.innerHTML = filteredSales.slice(0, 20).map(sale => {
+                const saleTime = new Date(sale.timestamp);
+                const timeAgo = getTimeAgo(saleTime);
+                const itemsText = sale.items.map(item => 
+                    `${item.name} ${item.quantity} ${item.unit}`
+                ).join(', ');
+
+                return `
+                    <div class="sale-item ${sale.isNew ? 'new' : ''}">
+                        <div class="sale-header">
+                            <div class="sale-info">
+                                <div class="sale-amount">฿${sale.totalAmount.toFixed(2)}</div>
+                                <div class="sale-meta">
+                                    <i class="fas fa-store me-1"></i>${sale.branchName} •
+                                    <i class="fas fa-user me-1"></i>${sale.employeeName} •
+                                    <i class="fas fa-clock me-1"></i>${timeAgo}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sale-items">
+                            <i class="fas fa-shopping-bag me-2 text-muted"></i>${itemsText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Remove new flag after animation
+            setTimeout(() => {
+                salesData.forEach(sale => sale.isNew = false);
+            }, 2000);
+        }
+
+        function updateStatistics() {
+            const today = new Date().toDateString();
+            const todaySales = salesData.filter(sale => 
+                new Date(sale.timestamp).toDateString() === today
+            );
+
+            const totalSales = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+            const totalTransactions = todaySales.length;
+            const avgTicket = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+            const activeBranches = new Set(todaySales.map(sale => sale.branchName)).size;
+
+            document.getElementById('totalSales').textContent = `฿${totalSales.toLocaleString()}`;
+            document.getElementById('totalTransactions').textContent = totalTransactions.toLocaleString();
+            document.getElementById('avgTicket').textContent = `฿${avgTicket.toFixed(0)}`;
+            document.getElementById('activeBranches').textContent = activeBranches;
+        }
+
+        function updateChart() {
+            if (!hourlyChart) return;
+
+            const today = new Date().toDateString();
+            const todaySales = salesData.filter(sale => 
+                new Date(sale.timestamp).toDateString() === today
+            );
+
+            // Group by hour
+            const hourlyData = Array(24).fill(0);
+            todaySales.forEach(sale => {
+                const hour = new Date(sale.timestamp).getHours();
+                hourlyData[hour] += sale.totalAmount;
+            });
+
+            hourlyChart.data.datasets[0].data = hourlyData;
+            hourlyChart.update('none');
+        }
+
+        function filterBranch(branchFilter) {
+            currentFilter = branchFilter;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            updateSalesDisplay();
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const icon = document.getElementById('refreshIcon');
+            
+            if (autoRefreshEnabled) {
+                icon.className = 'fas fa-pause';
+                startAutoRefresh();
+            } else {
+                icon.className = 'fas fa-play';
+                clearInterval(refreshInterval);
+            }
+        }
+
+        function playNotificationSound() {
+            if (soundEnabled) {
+                try {
+                    const audio = document.getElementById('notificationSound');
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log('Sound play failed:', e));
+                } catch (error) {
+                    console.log('Sound not available:', error);
+                }
+            }
+        }
+
+        function exportData() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "วันที่,เวลา,สาขา,พนักงาน,สินค้า,จำนวน,ยอดเงิน\n"
+                + salesData.map(sale => {
+                    const date = new Date(sale.timestamp);
+                    const dateStr = date.toLocaleDateString('th-TH');
+                    const timeStr = date.toLocaleTimeString('th-TH');
+                    const items = sale.items.map(item => `${item.name} (${item.quantity} ${item.unit})`).join('; ');
+                    
+                    return `${dateStr},${timeStr},${sale.branchName},${sale.employeeName},"${items}",${sale.items.length},${sale.totalAmount}`;
+                }).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `sales_data_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) {
+                return `${diffInSeconds} วินาทีที่แล้ว`;
+            } else if (diffInSeconds < 3600) {
+                const minutes = Math.floor(diffInSeconds / 60);
+                return `${minutes} นาทีที่แล้ว`;
+            } else if (diffInSeconds < 86400) {
+                const hours = Math.floor(diffInSeconds / 3600);
+                return `${hours} ชั่วโมงที่แล้ว`;
+            } else {
+                return date.toLocaleDateString('th-TH');
+            }
+        }
+
+        // Auto-refresh page visibility
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && autoRefreshEnabled) {
+                fetchLatestSales();
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (socket) socket.disconnect();
+        });
+    </script>
+</body>
+</html>

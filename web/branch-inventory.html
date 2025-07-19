@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คลังสินค้าสาขา - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .inventory-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .branch-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 2px solid var(--primary-orange);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-orange) 0%, var(--primary-gold) 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-brown);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .inventory-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+        }
+
+        .table th {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stock-level {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .stock-high {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .stock-medium {
+            background: rgba(255, 191, 0, 0.2);
+            color: var(--warning-amber);
+        }
+
+        .stock-low {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .stock-out {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .transfer-modal .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+        }
+
+        .transfer-modal .modal-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 20px 20px 0 0;
+            border-bottom: none;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            margin-bottom: 1.5rem;
+        }
+
+        .reorder-alert {
+            background: linear-gradient(135deg, rgba(255, 191, 0, 0.1) 0%, rgba(255, 191, 0, 0.05) 100%);
+            border: 2px solid var(--warning-amber);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .movement-log {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .movement-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .movement-item:last-child {
+            border-bottom: none;
+        }
+
+        .movement-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: 600;
+        }
+
+        .movement-in {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--success-green);
+        }
+
+        .movement-out {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger-red);
+        }
+
+        .movement-transfer {
+            background: rgba(255, 165, 0, 0.2);
+            color: var(--primary-orange);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .low-stock-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: var(--danger-red);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .transfer-form {
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-green) 0%, var(--warning-amber) 50%, var(--danger-red) 100%);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .branch-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background: var(--success-green);
+        }
+
+        .status-offline {
+            background: var(--danger-red);
+        }
+
+        .status-sync {
+            background: var(--warning-amber);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/branch-management">
+                <i class="fas fa-arrow-left me-2"></i>คลังสินค้าสาขา
+            </a>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light me-2" onclick="syncAllBranches()">
+                    <i class="fas fa-sync-alt me-1"></i>ซิงค์ทุกสาขา
+                </button>
+                <button class="btn btn-outline-light" onclick="generateReport()">
+                    <i class="fas fa-file-export me-1"></i>ส่งออกรายงาน
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-3">
+        <!-- Branch Selector -->
+        <div class="branch-selector">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">เลือกสาขา:</label>
+                    <select class="form-select" id="branchSelector" onchange="loadBranchInventory()">
+                        <option value="all">ทุกสาขา (ภาพรวม)</option>
+                        <option value="BR-001">BR-001 - สาขาเซ็นทรัลปิ่นเกล้า</option>
+                        <option value="BR-002">BR-002 - สาขาเซียร์รังสิต</option>
+                        <option value="BR-003">BR-003 - สาขาเชียงใหม่ นิมมาน</option>
+                        <option value="BR-004">BR-004 - สาขาภูเก็ต ป่าตอง</option>
+                        <option value="BR-005">BR-005 - สาขาขอนแก่น เซ็นทรัล</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center justify-content-end gap-3">
+                        <div class="branch-status-indicator">
+                            <span class="status-dot status-online" id="branchStatusDot"></span>
+                            <span id="branchStatusText">ออนไลน์</span>
+                        </div>
+                        <small class="text-muted">
+                            อัพเดทล่าสุด: <span id="lastSync">2 นาทีที่แล้ว</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value text-primary" id="totalProducts">25</div>
+                <div class="stat-label">รายการสินค้า</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-success" id="totalValue">฿485,600</div>
+                <div class="stat-label">มูลค่าสต๊อค</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-warning" id="lowStockItems">8</div>
+                <div class="stat-label">สินค้าใกล้หมด</div>
+                <div class="low-stock-indicator" id="lowStockAlert"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-danger" id="outOfStockItems">2</div>
+                <div class="stat-label">สินค้าหมดสต๊อค</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-info" id="turnoverRate">4.2</div>
+                <div class="stat-label">อัตราหมุนเวียน/เดือน</div>
+            </div>
+        </div>
+
+        <!-- Reorder Alerts -->
+        <div class="reorder-alert">
+            <h6 class="mb-2">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>แจ้งเตือนสต๊อคต่ำ</strong>
+            </h6>
+            <div id="reorderAlerts">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>มะม่วงอบแห้ง Premium (BR-001)</span>
+                    <div>
+                        <span class="badge bg-danger">เหลือ 2.5 kg</span>
+                        <button class="btn btn-sm btn-warning ms-2" onclick="quickReorder('DF-MANGO-001', 'BR-001')">
+                            <i class="fas fa-shopping-cart me-1"></i>สั่งซื้อด่วน
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>สับปะรดอบแห้ง (BR-003)</span>
+                    <div>
+                        <span class="badge bg-warning">เหลือ 5.2 kg</span>
+                        <button class="btn btn-sm btn-info ms-2" onclick="transferStock('DF-PINE-001', 'BR-003')">
+                            <i class="fas fa-exchange-alt me-1"></i>โอนสต๊อค
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action-btn" onclick="showStockTransfer()">
+                <i class="fas fa-exchange-alt"></i>โอนสต๊อคระหว่างสาขา
+            </button>
+            <button class="quick-action-btn" onclick="showStockAdjustment()">
+                <i class="fas fa-edit"></i>ปรับปรุงสต๊อค
+            </button>
+            <button class="quick-action-btn" onclick="showBulkReorder()">
+                <i class="fas fa-cart-plus"></i>สั่งซื้อหลายรายการ
+            </button>
+            <button class="quick-action-btn" onclick="showStockCount()">
+                <i class="fas fa-clipboard-check"></i>นับสต๊อค
+            </button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Inventory Table -->
+                <div class="inventory-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>รหัสสินค้า</th>
+                                    <th>ชื่อสินค้า</th>
+                                    <th>สต๊อคปัจจุบัน</th>
+                                    <th>จุดสั่งซื้อ</th>
+                                    <th>สถานะ</th>
+                                    <th>มูลค่า</th>
+                                    <th>การดำเนินการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <!-- Inventory items will be dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Stock Movement Chart -->
+                <div class="chart-container">
+                    <h6 class="mb-3">
+                        <i class="fas fa-chart-line me-2"></i>การเคลื่อนไหวสต๊อค (7 วันที่แล้ว)
+                    </h6>
+                    <canvas id="stockMovementChart" height="200"></canvas>
+                </div>
+
+                <!-- Recent Movements Log -->
+                <div class="movement-log">
+                    <h6 class="mb-3">
+                        <i class="fas fa-history me-2"></i>การเคลื่อนไหวล่าสุด
+                    </h6>
+                    <div id="movementsList">
+                        <div class="movement-item">
+                            <div class="movement-icon movement-in">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">รับสินค้าเข้า</div>
+                                <div class="text-muted small">มะม่วงอบแห้ง +20 kg</div>
+                                <div class="text-muted small">2 ชั่วโมงที่แล้ว</div>
+                            </div>
+                        </div>
+                        <div class="movement-item">
+                            <div class="movement-icon movement-out">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">ขายสินค้า</div>
+                                <div class="text-muted small">สับปะรดอบแห้ง -5.5 kg</div>
+                                <div class="text-muted small">4 ชั่วโมงที่แล้ว</div>
+                            </div>
+                        </div>
+                        <div class="movement-item">
+                            <div class="movement-icon movement-transfer">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">โอนสต๊อค</div>
+                                <div class="text-muted small">กล้วยอบแห้ง 10 kg → BR-002</div>
+                                <div class="text-muted small">6 ชั่วโมงที่แล้ว</div>
+                            </div>
+                        </div>
+                        <div class="movement-item">
+                            <div class="movement-icon movement-in">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">รับโอนสต๊อค</div>
+                                <div class="text-muted small">ลำไยอบแห้ง +8 kg จาก BR-001</div>
+                                <div class="text-muted small">8 ชั่วโมงที่แล้ว</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Transfer Modal -->
+    <div class="modal fade transfer-modal" id="stockTransferModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-dark">
+                        <i class="fas fa-exchange-alt me-2"></i>โอนสต๊อคระหว่างสาขา
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="stockTransferForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">สาขาต้นทาง</label>
+                                <select class="form-select" id="sourceBranch" required>
+                                    <option value="">เลือกสาขาต้นทาง</option>
+                                    <option value="BR-001">BR-001 - เซ็นทรัลปิ่นเกล้า</option>
+                                    <option value="BR-002">BR-002 - เซียร์รังสิต</option>
+                                    <option value="BR-003">BR-003 - เชียงใหม่ นิมมาน</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">สาขาปลายทาง</label>
+                                <select class="form-select" id="destinationBranch" required>
+                                    <option value="">เลือกสาขาปลายทาง</option>
+                                    <option value="BR-001">BR-001 - เซ็นทรัลปิ่นเกล้า</option>
+                                    <option value="BR-002">BR-002 - เซียร์รังสิต</option>
+                                    <option value="BR-003">BR-003 - เชียงใหม่ นิมมาน</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">สินค้า</label>
+                                <select class="form-select" id="transferProduct" required>
+                                    <option value="">เลือกสินค้า</option>
+                                    <option value="DF-MANGO-001">มะม่วงอบแห้ง Premium</option>
+                                    <option value="DF-PINE-001">สับปะรดอบแห้ง</option>
+                                    <option value="DF-BANANA-001">กล้วยอบแห้ง</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">จำนวนที่โอน (kg)</label>
+                                <input type="number" class="form-control" id="transferQuantity" min="0.1" step="0.1" required>
+                                <small class="text-muted">สต๊อคปัจจุบัน: <span id="availableStock">-- kg</span></small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">หมายเหตุ</label>
+                            <textarea class="form-control" id="transferNotes" rows="3" 
+                                placeholder="เหตุผลในการโอนสต๊อค..."></textarea>
+                        </div>
+                        <div class="transfer-form">
+                            <h6>สรุปการโอน</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>จาก:</strong> <span id="transferFromSummary">-</span><br>
+                                    <strong>ไป:</strong> <span id="transferToSummary">-</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>สินค้า:</strong> <span id="transferProductSummary">-</span><br>
+                                    <strong>จำนวน:</strong> <span id="transferQuantitySummary">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="executeStockTransfer()">
+                        <i class="fas fa-check me-1"></i>ยืนยันการโอน
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentBranch = 'all';
+        let inventoryData = [];
+        let stockChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBranchInventory();
+            initStockChart();
+            
+            // Auto refresh every 30 seconds
+            setInterval(() => {
+                if (currentBranch !== 'all') {
+                    updateBranchStatus();
+                }
+            }, 30000);
+        });
+
+        // Load branch inventory
+        async function loadBranchInventory() {
+            const branchId = document.getElementById('branchSelector').value;
+            currentBranch = branchId;
+
+            try {
+                // In real implementation, fetch from API
+                // const response = await fetch(`/api/branches/${branchId}/inventory`);
+                // const data = await response.json();
+
+                // Mock data
+                inventoryData = generateMockInventoryData(branchId);
+                
+                displayInventoryTable(inventoryData);
+                updateStatistics(inventoryData);
+                updateBranchStatus();
+                updateStockChart();
+                
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+
+        // Generate mock inventory data
+        function generateMockInventoryData(branchId) {
+            const products = [
+                { id: 'DF-MANGO-001', name: 'มะม่วงอบแห้ง Premium', unit: 'kg', price: 2400 },
+                { id: 'DF-PINE-001', name: 'สับปะรดอบแห้ง', unit: 'kg', price: 2100 },
+                { id: 'DF-BANANA-001', name: 'กล้วยอบแห้ง', unit: 'kg', price: 1800 },
+                { id: 'DF-LONGAN-001', name: 'ลำไยอบแห้ง', unit: 'kg', price: 2600 },
+                { id: 'DF-MIXED-001', name: 'ผลไม้รวม Premium', unit: 'kg', price: 2200 }
+            ];
+
+            return products.map(product => {
+                const stock = Math.random() * 50;
+                const reorderPoint = 10 + Math.random() * 10;
+                
+                return {
+                    ...product,
+                    currentStock: stock,
+                    reorderPoint: reorderPoint,
+                    status: stock <= 0 ? 'out' : 
+                           stock <= reorderPoint * 0.5 ? 'low' :
+                           stock <= reorderPoint ? 'medium' : 'high',
+                    value: stock * product.price,
+                    lastMovement: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+                };
+            });
+        }
+
+        // Display inventory table
+        function displayInventoryTable(inventory) {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+
+            inventory.forEach(item => {
+                const statusClass = `stock-${item.status}`;
+                const statusText = item.status === 'out' ? 'หมดสต๊อค' :
+                                  item.status === 'low' ? 'สต๊อคต่ำ' :
+                                  item.status === 'medium' ? 'ใกล้หมด' : 'สต๊อคดี';
+
+                const stockWidth = Math.min(100, (item.currentStock / item.reorderPoint) * 100);
+
+                const row = `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.name}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${item.currentStock.toFixed(1)} ${item.unit}</span>
+                                <div class="progress" style="width: 60px; height: 6px;">
+                                    <div class="progress-bar bg-${item.status === 'high' ? 'success' : item.status === 'medium' ? 'warning' : 'danger'}" 
+                                        style="width: ${stockWidth}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${item.reorderPoint.toFixed(1)} ${item.unit}</td>
+                        <td><span class="stock-level ${statusClass}">${statusText}</span></td>
+                        <td>฿${item.value.toLocaleString()}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewStockDetails('${item.id}')" title="ดูรายละเอียด">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn" onclick="adjustStock('${item.id}')" title="ปรับสต๊อค">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn" onclick="transferStock('${item.id}')" title="โอนสต๊อค">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            ${item.status === 'low' || item.status === 'out' ? 
+                            `<button class="action-btn text-warning" onclick="quickReorder('${item.id}')" title="สั่งซื้อด่วน">
+                                <i class="fas fa-shopping-cart"></i>
+                            </button>` : ''}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Update statistics
+        function updateStatistics(inventory) {
+            const totalProducts = inventory.length;
+            const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
+            const lowStockItems = inventory.filter(item => item.status === 'low' || item.status === 'medium').length;
+            const outOfStockItems = inventory.filter(item => item.status === 'out').length;
+            const turnoverRate = 4.2; // Mock calculation
+
+            document.getElementById('totalProducts').textContent = totalProducts;
+            document.getElementById('totalValue').textContent = `฿${totalValue.toLocaleString()}`;
+            document.getElementById('lowStockItems').textContent = lowStockItems;
+            document.getElementById('outOfStockItems').textContent = outOfStockItems;
+            document.getElementById('turnoverRate').textContent = turnoverRate.toFixed(1);
+
+            // Show/hide low stock alert
+            document.getElementById('lowStockAlert').style.display = lowStockItems > 0 ? 'block' : 'none';
+        }
+
+        // Initialize stock movement chart
+        function initStockChart() {
+            const ctx = document.getElementById('stockMovementChart').getContext('2d');
+            
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัส', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์'],
+                    datasets: [{
+                        label: 'รับเข้า (kg)',
+                        data: [120, 85, 95, 110, 140, 75, 90],
+                        borderColor: '#32CD32',
+                        backgroundColor: 'rgba(50, 205, 50, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    }, {
+                        label: 'จ่ายออก (kg)',
+                        data: [90, 105, 88, 125, 98, 112, 85],
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update stock chart
+        function updateStockChart() {
+            // In real implementation, update with actual data
+            stockChart.data.datasets[0].data = Array(7).fill().map(() => Math.floor(Math.random() * 100) + 50);
+            stockChart.data.datasets[1].data = Array(7).fill().map(() => Math.floor(Math.random() * 100) + 40);
+            stockChart.update();
+        }
+
+        // Update branch status
+        function updateBranchStatus() {
+            const statusDot = document.getElementById('branchStatusDot');
+            const statusText = document.getElementById('branchStatusText');
+            const lastSync = document.getElementById('lastSync');
+
+            if (currentBranch === 'all') {
+                statusDot.className = 'status-dot status-sync';
+                statusText.textContent = 'ซิงค์ทุกสาขา';
+            } else {
+                // Simulate random status
+                const statuses = ['online', 'sync'];
+                const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                
+                statusDot.className = `status-dot status-${randomStatus}`;
+                statusText.textContent = randomStatus === 'online' ? 'ออนไลน์' : 'กำลังซิงค์';
+            }
+
+            lastSync.textContent = 'เมื่อกี้นี้';
+        }
+
+        // Stock operations
+        function showStockTransfer() {
+            const modal = new bootstrap.Modal(document.getElementById('stockTransferModal'));
+            modal.show();
+        }
+
+        function viewStockDetails(productId) {
+            window.open(`/inventory-details?product=${productId}&branch=${currentBranch}`, '_blank');
+        }
+
+        function adjustStock(productId) {
+            const newQuantity = prompt('กรอกจำนวนสต๊อคใหม่:');
+            if (newQuantity && !isNaN(newQuantity)) {
+                showNotification(`ปรับสต๊อค ${productId} เป็น ${newQuantity} kg เรียบร้อย`, 'success');
+                loadBranchInventory(); // Refresh
+            }
+        }
+
+        function transferStock(productId, branchId = null) {
+            document.getElementById('transferProduct').value = productId;
+            if (branchId) {
+                document.getElementById('sourceBranch').value = branchId;
+            }
+            showStockTransfer();
+        }
+
+        function quickReorder(productId, branchId = null) {
+            const quantity = prompt('จำนวนที่ต้องการสั่งซื้อ (kg):');
+            if (quantity && !isNaN(quantity)) {
+                showNotification(`สั่งซื้อ ${productId} จำนวน ${quantity} kg เรียบร้อย`, 'success');
+            }
+        }
+
+        function executeStockTransfer() {
+            const form = document.getElementById('stockTransferForm');
+            const formData = new FormData(form);
+            
+            // Validate form
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // In real implementation, send to API
+            showNotification('โอนสต๊อคเรียบร้อยแล้ว', 'success');
+            
+            // Close modal and refresh
+            bootstrap.Modal.getInstance(document.getElementById('stockTransferModal')).hide();
+            loadBranchInventory();
+        }
+
+        function syncAllBranches() {
+            showNotification('เริ่มซิงค์ข้อมูลทุกสาขา...', 'info');
+            
+            setTimeout(() => {
+                showNotification('ซิงค์ข้อมูลทุกสาขาเรียบร้อยแล้ว', 'success');
+                loadBranchInventory();
+            }, 2000);
+        }
+
+        function generateReport() {
+            showNotification('กำลังสร้างรายงาน...', 'info');
+            
+            setTimeout(() => {
+                const csvContent = generateCSVReport();
+                downloadCSV(csvContent, `inventory-report-${new Date().toISOString().split('T')[0]}.csv`);
+                showNotification('ส่งออกรายงานเรียบร้อยแล้ว', 'success');
+            }, 1000);
+        }
+
+        function generateCSVReport() {
+            const headers = ['รหัสสินค้า', 'ชื่อสินค้า', 'สต๊อคปัจจุบัน', 'จุดสั่งซื้อ', 'สถานะ', 'มูลค่า'];
+            const rows = inventoryData.map(item => [
+                item.id,
+                item.name,
+                item.currentStock.toFixed(1),
+                item.reorderPoint.toFixed(1),
+                item.status,
+                item.value.toFixed(2)
+            ]);
+            
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showNotification(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Quick actions
+        function showStockAdjustment() {
+            alert('ฟีเจอร์ปรับปรุงสต๊อคจะเปิดในหน้าต่างใหม่');
+        }
+
+        function showBulkReorder() {
+            alert('ฟีเจอร์สั่งซื้อหลายรายการจะเปิดในหน้าต่างใหม่');
+        }
+
+        function showStockCount() {
+            alert('ฟีเจอร์นับสต๊อคจะเปิดในหน้าต่างใหม่');
+        }
+
+        // Form event listeners
+        document.getElementById('sourceBranch').addEventListener('change', updateTransferSummary);
+        document.getElementById('destinationBranch').addEventListener('change', updateTransferSummary);
+        document.getElementById('transferProduct').addEventListener('change', updateTransferSummary);
+        document.getElementById('transferQuantity').addEventListener('input', updateTransferSummary);
+
+        function updateTransferSummary() {
+            const sourceBranch = document.getElementById('sourceBranch');
+            const destinationBranch = document.getElementById('destinationBranch');
+            const product = document.getElementById('transferProduct');
+            const quantity = document.getElementById('transferQuantity').value;
+
+            document.getElementById('transferFromSummary').textContent = 
+                sourceBranch.selectedOptions[0]?.text || '-';
+            document.getElementById('transferToSummary').textContent = 
+                destinationBranch.selectedOptions[0]?.text || '-';
+            document.getElementById('transferProductSummary').textContent = 
+                product.selectedOptions[0]?.text || '-';
+            document.getElementById('transferQuantitySummary').textContent = 
+                quantity ? `${quantity} kg` : '-';
+
+            // Update available stock (mock)
+            if (product.value) {
+                const availableStock = Math.floor(Math.random() * 50) + 10;
+                document.getElementById('availableStock').textContent = `${availableStock} kg`;
+            }
+        }
+    </script>
+</body>
+</html>

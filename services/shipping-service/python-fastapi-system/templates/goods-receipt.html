@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goods Receipt - ระบบรับสินค้าเข้าคลัง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --info-blue: #17A2B8;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .receipt-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .receipt-interface {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .po-search {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            margin-bottom: 2rem;
+        }
+
+        .po-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.9) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .po-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .po-card.selected {
+            border: 2px solid var(--primary-orange);
+            transform: translateY(-3px);
+        }
+
+        .po-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .po-id {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-deep-orange);
+        }
+
+        .po-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .po-status.approved {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .items-comparison {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: var(--bg-light-yellow);
+        }
+
+        .quantity-input {
+            width: 80px;
+            padding: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .status-match {
+            background-color: #D1F2D1;
+            color: #155724;
+        }
+
+        .status-short {
+            background-color: #F8D7DA;
+            color: #721C24;
+        }
+
+        .status-over {
+            background-color: #CCE5FF;
+            color: #004085;
+        }
+
+        .receipt-summary {
+            position: sticky;
+            top: 2rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .summary-section {
+            margin-bottom: 2rem;
+        }
+
+        .summary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-brown);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-orange);
+            padding-bottom: 0.5rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .summary-item.total {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-deep-orange);
+            border-bottom: none;
+            border-top: 2px solid var(--primary-orange);
+            padding-top: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+            width: 100%;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .confirm-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .receipt-history {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            margin-bottom: 2rem;
+        }
+
+        .receipt-item {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px var(--shadow-soft);
+        }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .receipt-id {
+            font-weight: 600;
+            color: var(--success-green);
+        }
+
+        .receipt-date {
+            color: var(--text-brown);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .receipt-interface {
+                grid-template-columns: 1fr;
+            }
+            
+            .receipt-summary {
+                position: static;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/purchase">
+                            <i class="fas fa-shopping-bag"></i> จัดซื้อ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/goods-receipt">
+                            <i class="fas fa-truck-loading"></i> รับสินค้า
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="receipt-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-truck-loading text-success"></i>
+                        ระบบรับสินค้าเข้าคลัง
+                    </h1>
+                    <p class="text-muted mt-2">จัดการการรับสินค้าจากซัพพลายเออร์และตรวจสอบความถูกต้อง</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="refreshPO()">
+                            <i class="fas fa-sync"></i> รีเฟรช
+                        </button>
+                        <button class="btn btn-success" onclick="viewReceiptHistory()">
+                            <i class="fas fa-history"></i> ประวัติ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PO Search -->
+        <div class="po-search">
+            <h4>
+                <i class="fas fa-search"></i>
+                ค้นหา Purchase Order
+            </h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="poSearch" placeholder="ค้นหาด้วยเลขที่ PO หรือชื่อซัพพลายเออร์">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="approved">อนุมัติแล้ว</option>
+                        <option value="partial">รับบางส่วน</option>
+                        <option value="completed">รับครบแล้ว</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="searchPO()">
+                        <i class="fas fa-search"></i> ค้นหา
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PO List -->
+        <div class="receipt-card">
+            <h4>
+                <i class="fas fa-list"></i>
+                รายการ Purchase Order ที่พร้อมรับสินค้า
+            </h4>
+            <div id="poList">
+                <!-- PO items will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Goods Receipt Interface -->
+        <div class="receipt-interface" id="receiptInterface" style="display: none;">
+            <!-- Items Comparison -->
+            <div class="items-comparison">
+                <h4>
+                    <i class="fas fa-balance-scale"></i>
+                    เปรียบเทียบสินค้า
+                    <span class="badge bg-primary ms-2" id="selectedPOId">-</span>
+                </h4>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>รายการสินค้า</th>
+                            <th>จำนวนที่สั่ง</th>
+                            <th>จำนวนที่รับ</th>
+                            <th>ส่วนต่าง</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <!-- Comparison items will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Receipt Summary -->
+            <div class="receipt-summary">
+                <div class="summary-section">
+                    <div class="summary-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        สรุปการรับสินค้า
+                    </div>
+                    <div id="receiptSummary">
+                        <!-- Summary will be calculated here -->
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">
+                        <i class="fas fa-sticky-note"></i>
+                        หมายเหตุ
+                    </div>
+                    <textarea class="form-control" id="receiptNotes" rows="3" placeholder="หมายเหตุเกี่ยวกับการรับสินค้า (ถ้ามี)"></textarea>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary flex-fill" onclick="printGoodsReceiptDirect()">
+                        <i class="fas fa-print"></i> ปริ้นท์ใบรับสินค้า
+                    </button>
+                    <button class="confirm-btn" id="confirmReceiptBtn" onclick="confirmReceipt()" disabled>
+                        <i class="fas fa-check-circle"></i> ยืนยันรับสินค้า
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt History -->
+        <div class="receipt-history" id="receiptHistory" style="display: none;">
+            <h4>
+                <i class="fas fa-history"></i>
+                ประวัติการรับสินค้า
+            </h4>
+            <div id="receiptHistoryList">
+                <!-- Receipt history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let approvedPOs = [];
+        let selectedPO = null;
+        let receivedItems = [];
+        let receiptHistory = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateMockPOs();
+            loadPOList();
+            generateReceiptHistory();
+            setupEventListeners();
+        });
+
+        function generateMockPOs() {
+            approvedPOs = [
+                {
+                    id: 'PO-2024-001',
+                    supplier: 'บริษัท ผลไม้อบแห้งไทย จำกัด',
+                    date: '2024-01-15',
+                    deliveryDate: '2024-01-20',
+                    status: 'approved',
+                    statusThai: 'อนุมัติแล้ว',
+                    items: [
+                        { name: 'มะม่วงแห้ง', quantity: 50, unit: 'กก.', price: 150 },
+                        { name: 'ลูกเกดแห้ง', quantity: 30, unit: 'กก.', price: 200 },
+                        { name: 'แอปเปิ้ลแห้ง', quantity: 25, unit: 'กก.', price: 180 }
+                    ]
+                },
+                {
+                    id: 'PO-2024-002',
+                    supplier: 'สหกรณ์เกษตรกรผลไม้',
+                    date: '2024-01-10',
+                    deliveryDate: '2024-01-18',
+                    status: 'approved',
+                    statusThai: 'อนุมัติแล้ว',
+                    items: [
+                        { name: 'กล้วยแห้ง', quantity: 40, unit: 'กก.', price: 120 },
+                        { name: 'สับปะรดแห้ง', quantity: 35, unit: 'กก.', price: 140 }
+                    ]
+                },
+                {
+                    id: 'PO-2024-003',
+                    supplier: 'เนเจอรัล ดรายฟรุ้ต',
+                    date: '2024-01-12',
+                    deliveryDate: '2024-01-22',
+                    status: 'approved',
+                    statusThai: 'อนุมัติแล้ว',
+                    items: [
+                        { name: 'ทุเรียนแห้ง', quantity: 20, unit: 'กก.', price: 350 },
+                        { name: 'มะพร้าวแห้ง', quantity: 60, unit: 'กก.', price: 80 },
+                        { name: 'ขิงแห้ง', quantity: 15, unit: 'กก.', price: 220 }
+                    ]
+                }
+            ];
+        }
+
+        function generateReceiptHistory() {
+            receiptHistory = [
+                {
+                    id: 'GR-2024-001',
+                    poId: 'PO-2024-001',
+                    supplier: 'บริษัท ผลไม้อบแห้งไทย จำกัด',
+                    date: '2024-01-20',
+                    items: 3,
+                    status: 'completed',
+                    statusThai: 'รับครบแล้ว'
+                },
+                {
+                    id: 'GR-2024-002',
+                    poId: 'PO-2024-002',
+                    supplier: 'สหกรณ์เกษตรกรผลไม้',
+                    date: '2024-01-18',
+                    items: 2,
+                    status: 'partial',
+                    statusThai: 'รับบางส่วน'
+                }
+            ];
+        }
+
+        function setupEventListeners() {
+            document.getElementById('poSearch').addEventListener('input', function() {
+                searchPO();
+            });
+
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                searchPO();
+            });
+        }
+
+        function loadPOList() {
+            const poList = document.getElementById('poList');
+            poList.innerHTML = '';
+
+            if (approvedPOs.length === 0) {
+                poList.innerHTML = '<p class="text-center text-muted">ไม่มี Purchase Order ที่พร้อมรับสินค้า</p>';
+                return;
+            }
+
+            approvedPOs.forEach(po => {
+                const poCard = document.createElement('div');
+                poCard.className = 'po-card';
+                poCard.onclick = () => selectPO(po);
+
+                poCard.innerHTML = `
+                    <div class="po-header">
+                        <div class="po-id">${po.id}</div>
+                        <div class="po-status ${po.status}">${po.statusThai}</div>
+                    </div>
+                    <div class="po-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>ซัพพลายเออร์:</strong> ${po.supplier}<br>
+                                <strong>วันที่สั่งซื้อ:</strong> ${po.date}<br>
+                                <strong>วันที่ส่งมอบ:</strong> ${po.deliveryDate}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>จำนวนรายการ:</strong> ${po.items.length} รายการ<br>
+                                <strong>ยอดรวม:</strong> ฿${po.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                poList.appendChild(poCard);
+            });
+        }
+
+        function selectPO(po) {
+            selectedPO = po;
+            
+            // Update selected PO display
+            document.querySelectorAll('.po-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // Show receipt interface
+            document.getElementById('receiptInterface').style.display = 'grid';
+            document.getElementById('selectedPOId').textContent = po.id;
+
+            // Initialize received items with PO quantities
+            receivedItems = po.items.map(item => ({
+                ...item,
+                ordered: item.quantity,
+                received: item.quantity // Start with same quantity, user can modify
+            }));
+
+            // Load comparison table
+            loadComparisonTable();
+            updateReceiptSummary();
+        }
+
+        function loadComparisonTable() {
+            const tableBody = document.getElementById('comparisonTableBody');
+            tableBody.innerHTML = '';
+
+            receivedItems.forEach((item, index) => {
+                const row = document.createElement('tr');
+                const difference = item.received - item.ordered;
+                const status = difference === 0 ? 'ตรงกัน' : difference > 0 ? 'เกิน' : 'ขาด';
+                const statusClass = difference === 0 ? 'status-match' : difference > 0 ? 'status-over' : 'status-short';
+
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td class="text-center">${item.ordered} ${item.unit}</td>
+                    <td class="text-center">
+                        <input type="number" class="quantity-input" value="${item.received}" 
+                               min="0" max="${item.ordered * 2}" 
+                               onchange="updateReceivedQuantity(${index}, this.value)">
+                        ${item.unit}
+                    </td>
+                    <td class="text-center" id="difference-${index}">${difference > 0 ? '+' : ''}${difference}</td>
+                    <td class="text-center ${statusClass}" id="status-${index}">${status}</td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateReceivedQuantity(index, newQuantity) {
+            receivedItems[index].received = parseInt(newQuantity) || 0;
+            
+            const difference = receivedItems[index].received - receivedItems[index].ordered;
+            const status = difference === 0 ? 'ตรงกัน' : difference > 0 ? 'เกิน' : 'ขาด';
+            const statusClass = difference === 0 ? 'status-match' : difference > 0 ? 'status-over' : 'status-short';
+
+            // Update difference display
+            document.getElementById(`difference-${index}`).textContent = (difference > 0 ? '+' : '') + difference;
+            
+            // Update status display
+            const statusElement = document.getElementById(`status-${index}`);
+            statusElement.textContent = status;
+            statusElement.className = `text-center ${statusClass}`;
+
+            updateReceiptSummary();
+        }
+
+        function updateReceiptSummary() {
+            const summaryDiv = document.getElementById('receiptSummary');
+            
+            const totalItems = receivedItems.length;
+            const matchedItems = receivedItems.filter(item => item.received === item.ordered).length;
+            const shortItems = receivedItems.filter(item => item.received < item.ordered).length;
+            const overItems = receivedItems.filter(item => item.received > item.ordered).length;
+            
+            summaryDiv.innerHTML = `
+                <div class="summary-item">
+                    <span>จำนวนรายการทั้งหมด:</span>
+                    <span>${totalItems} รายการ</span>
+                </div>
+                <div class="summary-item">
+                    <span>รายการที่รับตรงกัน:</span>
+                    <span class="text-success">${matchedItems} รายการ</span>
+                </div>
+                <div class="summary-item">
+                    <span>รายการที่รับขาด:</span>
+                    <span class="text-danger">${shortItems} รายการ</span>
+                </div>
+                <div class="summary-item">
+                    <span>รายการที่รับเกิน:</span>
+                    <span class="text-info">${overItems} รายการ</span>
+                </div>
+                <div class="summary-item total">
+                    <span>สถานะการรับสินค้า:</span>
+                    <span>${matchedItems === totalItems ? 'รับครบทุกรายการ' : 'รับไม่ครบ/เกิน'}</span>
+                </div>
+            `;
+
+            // Enable/disable confirm button
+            document.getElementById('confirmReceiptBtn').disabled = false;
+        }
+
+        function confirmReceipt() {
+            if (!selectedPO) {
+                alert('กรุณาเลือก Purchase Order');
+                return;
+            }
+
+            const notes = document.getElementById('receiptNotes').value;
+            const receiptId = 'GR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+            
+            const receiptData = {
+                id: receiptId,
+                poId: selectedPO.id,
+                supplier: selectedPO.supplier,
+                date: new Date().toLocaleDateString('th-TH'),
+                items: receivedItems,
+                notes: notes,
+                status: 'completed'
+            };
+
+            // Add to receipt history
+            receiptHistory.unshift(receiptData);
+
+            // Show success message
+            alert(`✅ ยืนยันรับสินค้าสำเร็จ!\n\nเลขที่ใบรับสินค้า: ${receiptId}\nPO อ้างอิง: ${selectedPO.id}`);
+
+            // Reset interface
+            resetInterface();
+            loadPOList();
+        }
+
+        function resetInterface() {
+            selectedPO = null;
+            receivedItems = [];
+            document.getElementById('receiptInterface').style.display = 'none';
+            document.getElementById('receiptNotes').value = '';
+            document.querySelectorAll('.po-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+        }
+
+        function printGoodsReceiptDirect() {
+            if (!selectedPO || receivedItems.length === 0) {
+                alert('กรุณาเลือก Purchase Order และตรวจสอบข้อมูลก่อน');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            const notes = document.getElementById('receiptNotes').value;
+            
+            const printContent = `
+                <!DOCTYPE html>
+                <html lang="th">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบรับสินค้า - ${selectedPO.id}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Prompt', sans-serif;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: #333;
+                            background: white;
+                        }
+                        .container {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #32CD32;
+                            padding-bottom: 15px;
+                        }
+                        .company-name {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #32CD32;
+                            margin-bottom: 5px;
+                        }
+                        .document-title {
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #2C1810;
+                            margin-bottom: 10px;
+                        }
+                        .document-info {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 30px;
+                        }
+                        .info-section {
+                            flex: 1;
+                            padding: 0 10px;
+                        }
+                        .info-title {
+                            font-weight: 600;
+                            color: #228B22;
+                            margin-bottom: 10px;
+                            border-bottom: 1px solid #32CD32;
+                            padding-bottom: 5px;
+                        }
+                        .info-item {
+                            margin-bottom: 5px;
+                        }
+                        .info-label {
+                            font-weight: 500;
+                            color: #2C1810;
+                        }
+                        .items-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        .items-table th,
+                        .items-table td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        .items-table th {
+                            background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+                            color: white;
+                            font-weight: 600;
+                        }
+                        .items-table tr:nth-child(even) {
+                            background: #F0FFF0;
+                        }
+                        .text-right {
+                            text-align: right;
+                        }
+                        .text-center {
+                            text-align: center;
+                        }
+                        .status-match {
+                            background-color: #D1F2D1 !important;
+                            color: #155724;
+                        }
+                        .status-short {
+                            background-color: #F8D7DA !important;
+                            color: #721C24;
+                        }
+                        .status-over {
+                            background-color: #CCE5FF !important;
+                            color: #004085;
+                        }
+                        .summary {
+                            margin-top: 30px;
+                            padding: 15px;
+                            background: #F0FFF0;
+                            border-left: 4px solid #32CD32;
+                        }
+                        .summary-title {
+                            font-weight: 600;
+                            margin-bottom: 10px;
+                            color: #228B22;
+                        }
+                        .summary-row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 5px;
+                        }
+                        .notes {
+                            margin-top: 30px;
+                            padding: 15px;
+                            background: #FFFACD;
+                            border-left: 4px solid #FFD700;
+                        }
+                        .notes-title {
+                            font-weight: 600;
+                            margin-bottom: 10px;
+                        }
+                        .signatures {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 50px;
+                        }
+                        .signature-box {
+                            text-align: center;
+                            width: 200px;
+                        }
+                        .signature-line {
+                            border-bottom: 1px solid #333;
+                            margin: 30px 0 10px 0;
+                            height: 50px;
+                        }
+                        @media print {
+                            body {
+                                font-size: 12px;
+                            }
+                            .container {
+                                margin: 0;
+                                padding: 10px;
+                            }
+                            .signatures {
+                                margin-top: 30px;
+                            }
+                            .signature-line {
+                                height: 40px;
+                                margin: 20px 0 10px 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="company-name">ระบบจัดการสต๊อคผลไม้อบแห้ง</div>
+                            <div class="document-title">ใบรับสินค้า (Goods Receipt)</div>
+                        </div>
+                        
+                        <div class="document-info">
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลการรับสินค้า</div>
+                                <div class="info-item">
+                                    <span class="info-label">เลขที่ใบรับสินค้า:</span> GR-${selectedPO.id.replace('PO-', '')}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">อ้างอิง PO:</span> ${selectedPO.id}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่รับสินค้า:</span> ${new Date().toLocaleDateString('th-TH')}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">ผู้รับสินค้า:</span> คลังสินค้า
+                                </div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลซัพพลายเออร์</div>
+                                <div class="info-item">
+                                    <span class="info-label">ชื่อ:</span> ${selectedPO.supplier}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่สั่งซื้อ:</span> ${selectedPO.date}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่ส่งมอบ:</span> ${selectedPO.deliveryDate}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">ลำดับ</th>
+                                    <th width="35%">รายการสินค้า</th>
+                                    <th width="15%">จำนวนที่สั่ง</th>
+                                    <th width="15%">จำนวนที่รับ</th>
+                                    <th width="15%">ส่วนต่าง</th>
+                                    <th width="15%">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${receivedItems.map((item, index) => {
+                                    const difference = item.received - item.ordered;
+                                    const status = difference === 0 ? 'ตรงกัน' : difference > 0 ? 'เกิน' : 'ขาด';
+                                    const statusClass = difference === 0 ? 'status-match' : difference > 0 ? 'status-over' : 'status-short';
+                                    
+                                    return `
+                                        <tr>
+                                            <td class="text-center">${index + 1}</td>
+                                            <td>${item.name}</td>
+                                            <td class="text-center">${item.ordered} ${item.unit}</td>
+                                            <td class="text-center">${item.received} ${item.unit}</td>
+                                            <td class="text-center">${difference > 0 ? '+' : ''}${difference}</td>
+                                            <td class="text-center ${statusClass}">${status}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div class="summary">
+                            <div class="summary-title">สรุปผลการรับสินค้า</div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่สั่งซื้อ:</span>
+                                <span>${receivedItems.length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่รับครบ:</span>
+                                <span>${receivedItems.filter(item => item.received === item.ordered).length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่ขาด:</span>
+                                <span>${receivedItems.filter(item => item.received < item.ordered).length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่เกิน:</span>
+                                <span>${receivedItems.filter(item => item.received > item.ordered).length} รายการ</span>
+                            </div>
+                        </div>
+                        
+                        ${notes ? `
+                            <div class="notes">
+                                <div class="notes-title">หมายเหตุ:</div>
+                                <div>${notes}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="signatures">
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้ส่งสินค้า</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้รับสินค้า</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้ตรวจสอบ</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+
+        function searchPO() {
+            const searchTerm = document.getElementById('poSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filteredPOs = approvedPOs;
+            
+            if (searchTerm) {
+                filteredPOs = filteredPOs.filter(po => 
+                    po.id.toLowerCase().includes(searchTerm) ||
+                    po.supplier.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (statusFilter) {
+                filteredPOs = filteredPOs.filter(po => po.status === statusFilter);
+            }
+            
+            displayFilteredPOs(filteredPOs);
+        }
+
+        function displayFilteredPOs(pos) {
+            const poList = document.getElementById('poList');
+            poList.innerHTML = '';
+
+            if (pos.length === 0) {
+                poList.innerHTML = '<p class="text-center text-muted">ไม่พบ Purchase Order ที่ตรงกับเงื่อนไข</p>';
+                return;
+            }
+
+            pos.forEach(po => {
+                const poCard = document.createElement('div');
+                poCard.className = 'po-card';
+                poCard.onclick = () => selectPO(po);
+
+                poCard.innerHTML = `
+                    <div class="po-header">
+                        <div class="po-id">${po.id}</div>
+                        <div class="po-status ${po.status}">${po.statusThai}</div>
+                    </div>
+                    <div class="po-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>ซัพพลายเออร์:</strong> ${po.supplier}<br>
+                                <strong>วันที่สั่งซื้อ:</strong> ${po.date}<br>
+                                <strong>วันที่ส่งมอบ:</strong> ${po.deliveryDate}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>จำนวนรายการ:</strong> ${po.items.length} รายการ<br>
+                                <strong>ยอดรวม:</strong> ฿${po.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                poList.appendChild(poCard);
+            });
+        }
+
+        function refreshPO() {
+            generateMockPOs();
+            loadPOList();
+            resetInterface();
+            alert('รีเฟรชข้อมูล Purchase Order เรียบร้อย');
+        }
+
+        function viewReceiptHistory() {
+            const historyDiv = document.getElementById('receiptHistory');
+            const historyList = document.getElementById('receiptHistoryList');
+            
+            historyDiv.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            if (receiptHistory.length === 0) {
+                historyList.innerHTML = '<p class="text-center text-muted">ยังไม่มีประวัติการรับสินค้า</p>';
+                return;
+            }
+            
+            receiptHistory.forEach(receipt => {
+                const receiptItem = document.createElement('div');
+                receiptItem.className = 'receipt-item';
+                
+                receiptItem.innerHTML = `
+                    <div class="receipt-header">
+                        <div class="receipt-id">${receipt.id}</div>
+                        <div class="receipt-date">${receipt.date}</div>
+                    </div>
+                    <div class="receipt-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>PO อ้างอิง:</strong> ${receipt.poId}<br>
+                                <strong>ซัพพลายเออร์:</strong> ${receipt.supplier}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>จำนวนรายการ:</strong> ${receipt.items} รายการ<br>
+                                <strong>สถานะ:</strong> <span class="badge bg-success">${receipt.statusThai}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-primary btn-sm" onclick="printReceiptHistory('${receipt.id}')">
+                            <i class="fas fa-print"></i> ปริ้นท์ใบรับสินค้า
+                        </button>
+                    </div>
+                `;
+                
+                historyList.appendChild(receiptItem);
+            });
+        }
+
+        function printReceiptHistory(receiptId) {
+            const receipt = receiptHistory.find(r => r.id === receiptId);
+            if (!receipt) {
+                alert('ไม่พบข้อมูลใบรับสินค้า');
+                return;
+            }
+            
+            // This would typically load the actual receipt data and print it
+            alert(`ปริ้นท์ใบรับสินค้า ${receiptId} - ฟีเจอร์นี้จะเชื่อมต่อกับข้อมูลจริงในระบบ`);
+        }
+    </script>
+</body>
+</html>

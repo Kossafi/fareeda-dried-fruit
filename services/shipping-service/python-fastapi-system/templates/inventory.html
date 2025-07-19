@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการสต๊อค - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .inventory-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .inventory-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .product-details {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .product-sku {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-stock {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .stock-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-stock {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .btn-add:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.4);
+        }
+
+        .btn-remove {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            color: white;
+        }
+
+        .btn-remove:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.4);
+        }
+
+        .stock-level {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stock-high {
+            background: linear-gradient(135deg, var(--success-green) 0%, #32CD32 100%);
+            color: white;
+        }
+
+        .stock-medium {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            color: var(--text-dark);
+        }
+
+        .stock-low {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            color: white;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px var(--shadow-soft);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .form-control {
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px var(--shadow-soft);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            border: 2px solid var(--primary-orange);
+            background: transparent;
+            color: var(--primary-orange);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-tab.active {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .product-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .product-icon {
+                margin: 0 0 1rem 0;
+            }
+            
+            .stock-actions {
+                margin-top: 1rem;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-boxes text-warning"></i>
+                        จัดการสต๊อคผลไม้อบแห้ง
+                    </h1>
+                    <p class="text-muted mt-2">ระบบจัดการสต๊อค เพิ่ม-ลด-แก้ไข รีแพ็คสินค้า</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary me-2" onclick="openAddProductModal()">
+                        <i class="fas fa-plus"></i> เพิ่มสินค้าใหม่
+                    </button>
+                    <button class="btn btn-success" onclick="openRepackModal()">
+                        <i class="fas fa-box"></i> รีแพ็คสินค้า
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="inventory-card">
+            <div class="search-box">
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" id="searchInput" placeholder="ค้นหาสินค้า (ชื่อ, SKU, หมวดหมู่)">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-control" id="sortSelect">
+                            <option value="name">เรียงตามชื่อ</option>
+                            <option value="stock">เรียงตามสต๊อค</option>
+                            <option value="price">เรียงตามราคา</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+                <button class="filter-tab" data-filter="high">สต๊อคเยอะ</button>
+                <button class="filter-tab" data-filter="medium">สต๊อคปานกลาง</button>
+                <button class="filter-tab" data-filter="low">สต๊อคต่ำ</button>
+            </div>
+        </div>
+
+        <!-- Inventory List -->
+        <div class="inventory-card">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h4>รายการสต๊อคปัจจุบัน</h4>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">อัพเดตล่าสุด: <span id="lastUpdate">-</span></small>
+                </div>
+            </div>
+            
+            <div id="inventoryList">
+                <!-- Inventory items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">เพิ่มสินค้าใหม่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">ชื่อสินค้า</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productNameEn" class="form-label">ชื่อสินค้า (อังกฤษ)</label>
+                            <input type="text" class="form-control" id="productNameEn" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productSku" class="form-label">SKU</label>
+                            <input type="text" class="form-control" id="productSku" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productPrice" class="form-label">ราคา (บาท)</label>
+                                    <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productUnit" class="form-label">หน่วย</label>
+                                    <select class="form-control" id="productUnit" required>
+                                        <option value="gram">กรัม</option>
+                                        <option value="kilogram">กิโลกรัม</option>
+                                        <option value="piece">ชิ้น</option>
+                                        <option value="box">ลัง</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="initialStock" class="form-label">สต๊อคเริ่มต้น</label>
+                            <input type="number" class="form-control" id="initialStock" min="0" value="0">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="addProduct()">เพิ่มสินค้า</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stockModalTitle">ปรับปรุงสต๊อค</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="product-icon" style="display: inline-flex; margin-bottom: 1rem;">
+                            <span id="stockModalIcon">🥭</span>
+                        </div>
+                        <h5 id="stockModalProductName">-</h5>
+                        <p class="text-muted" id="stockModalSku">-</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">สต๊อคปัจจุบัน</label>
+                        <p class="fw-bold text-primary" id="currentStock">- หน่วย</p>
+                    </div>
+                    
+                    <form id="stockAdjustmentForm">
+                        <div class="mb-3">
+                            <label for="adjustmentType" class="form-label">ประเภทการปรับปรุง</label>
+                            <select class="form-control" id="adjustmentType" required>
+                                <option value="add">เพิ่มสต๊อค</option>
+                                <option value="remove">ลดสต๊อค</option>
+                                <option value="set">กำหนดสต๊อค</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adjustmentAmount" class="form-label">จำนวน</label>
+                            <input type="number" class="form-control" id="adjustmentAmount" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adjustmentNote" class="form-label">หมายเหตุ</label>
+                            <textarea class="form-control" id="adjustmentNote" rows="3" placeholder="ระบุเหตุผลการปรับปรุงสต๊อค"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="adjustStock()">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentProducts = [];
+        let currentStockData = {};
+        let selectedProduct = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInventory();
+            initializeFilters();
+            updateLastUpdate();
+        });
+
+        async function loadInventory() {
+            try {
+                const response = await fetch('/products');
+                const data = await response.json();
+                currentProducts = data.products;
+                
+                // Generate mock stock data
+                currentStockData = {};
+                currentProducts.forEach(product => {
+                    currentStockData[product.sku] = {
+                        current: Math.floor(Math.random() * 500) + 10,
+                        unit: product.unit,
+                        lastUpdate: new Date().toISOString()
+                    };
+                });
+                
+                displayInventory(currentProducts);
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+
+        function displayInventory(products) {
+            const inventoryList = document.getElementById('inventoryList');
+            inventoryList.innerHTML = '';
+
+            const fruitEmojis = ['🥭', '🍇', '🍎', '🍌', '🍍'];
+
+            products.forEach((product, index) => {
+                const stockData = currentStockData[product.sku];
+                const stockLevel = getStockLevel(stockData.current);
+                const stockLevelClass = getStockLevelClass(stockLevel);
+
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-item';
+                productDiv.innerHTML = `
+                    <div class="product-icon">
+                        ${fruitEmojis[index % fruitEmojis.length]}
+                    </div>
+                    <div class="product-details">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-sku">SKU: ${product.sku}</div>
+                        <div class="product-stock">
+                            สต๊อค: <strong>${stockData.current.toLocaleString()} ${stockData.unit}</strong>
+                            <span class="stock-level ${stockLevelClass}">${stockLevel}</span>
+                        </div>
+                    </div>
+                    <div class="stock-actions">
+                        <button class="btn-stock btn-add" onclick="openStockModal('${product.sku}', 'add')" title="เพิ่มสต๊อค">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn-stock btn-remove" onclick="openStockModal('${product.sku}', 'remove')" title="ลดสต๊อค">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="btn-stock btn-edit" onclick="openStockModal('${product.sku}', 'edit')" title="แก้ไขสต๊อค">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                `;
+                inventoryList.appendChild(productDiv);
+            });
+        }
+
+        function getStockLevel(stock) {
+            if (stock >= 100) return 'สูง';
+            if (stock >= 50) return 'ปานกลาง';
+            return 'ต่ำ';
+        }
+
+        function getStockLevelClass(level) {
+            switch(level) {
+                case 'สูง': return 'stock-high';
+                case 'ปานกลาง': return 'stock-medium';
+                case 'ต่ำ': return 'stock-low';
+                default: return 'stock-medium';
+            }
+        }
+
+        function openStockModal(sku, action) {
+            const product = currentProducts.find(p => p.sku === sku);
+            const stockData = currentStockData[sku];
+            
+            selectedProduct = { ...product, ...stockData };
+            
+            document.getElementById('stockModalProductName').textContent = product.name;
+            document.getElementById('stockModalSku').textContent = `SKU: ${product.sku}`;
+            document.getElementById('currentStock').textContent = `${stockData.current.toLocaleString()} ${stockData.unit}`;
+            
+            // Set default adjustment type
+            const adjustmentType = document.getElementById('adjustmentType');
+            if (action === 'add') adjustmentType.value = 'add';
+            else if (action === 'remove') adjustmentType.value = 'remove';
+            else adjustmentType.value = 'set';
+            
+            // Clear form
+            document.getElementById('adjustmentAmount').value = '';
+            document.getElementById('adjustmentNote').value = '';
+            
+            new bootstrap.Modal(document.getElementById('stockModal')).show();
+        }
+
+        function adjustStock() {
+            const type = document.getElementById('adjustmentType').value;
+            const amount = parseFloat(document.getElementById('adjustmentAmount').value);
+            const note = document.getElementById('adjustmentNote').value;
+            
+            if (!selectedProduct || !amount || amount < 0) {
+                alert('กรุณาระบุจำนวนที่ถูกต้อง');
+                return;
+            }
+            
+            const currentStock = selectedProduct.current;
+            let newStock = currentStock;
+            
+            switch(type) {
+                case 'add':
+                    newStock = currentStock + amount;
+                    break;
+                case 'remove':
+                    newStock = Math.max(0, currentStock - amount);
+                    break;
+                case 'set':
+                    newStock = amount;
+                    break;
+            }
+            
+            // Update stock data
+            currentStockData[selectedProduct.sku].current = newStock;
+            currentStockData[selectedProduct.sku].lastUpdate = new Date().toISOString();
+            
+            // Refresh display
+            displayInventory(currentProducts);
+            updateLastUpdate();
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('stockModal')).hide();
+            
+            // Show success message
+            alert(`ปรับปรุงสต๊อคสำเร็จ! ${selectedProduct.name} ปัจจุบัน: ${newStock.toLocaleString()} ${selectedProduct.unit}`);
+        }
+
+        function openAddProductModal() {
+            new bootstrap.Modal(document.getElementById('addProductModal')).show();
+        }
+
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const nameEn = document.getElementById('productNameEn').value;
+            const sku = document.getElementById('productSku').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const unit = document.getElementById('productUnit').value;
+            const initialStock = parseFloat(document.getElementById('initialStock').value) || 0;
+            
+            if (!name || !nameEn || !sku || !price) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
+            // Check if SKU already exists
+            if (currentProducts.find(p => p.sku === sku)) {
+                alert('SKU นี้มีอยู่ในระบบแล้ว');
+                return;
+            }
+            
+            // Add new product
+            const newProduct = {
+                name: name,
+                name_en: nameEn,
+                sku: sku,
+                price: price,
+                unit: unit,
+                category: 'dried_fruit'
+            };
+            
+            currentProducts.push(newProduct);
+            currentStockData[sku] = {
+                current: initialStock,
+                unit: unit,
+                lastUpdate: new Date().toISOString()
+            };
+            
+            // Refresh display
+            displayInventory(currentProducts);
+            updateLastUpdate();
+            
+            // Close modal and reset form
+            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+            document.getElementById('addProductForm').reset();
+            
+            alert(`เพิ่มสินค้าใหม่สำเร็จ: ${name}`);
+        }
+
+        function openRepackModal() {
+            alert('🔄 ฟีเจอร์รีแพ็คสินค้า - Coming Soon!');
+        }
+
+        function initializeFilters() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredProducts = currentProducts.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.sku.toLowerCase().includes(searchTerm) ||
+                    product.category.toLowerCase().includes(searchTerm)
+                );
+                displayInventory(filteredProducts);
+            });
+
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter products
+                    const filter = this.dataset.filter;
+                    let filteredProducts = currentProducts;
+                    
+                    if (filter !== 'all') {
+                        filteredProducts = currentProducts.filter(product => {
+                            const stock = currentStockData[product.sku].current;
+                            const level = getStockLevel(stock);
+                            
+                            switch(filter) {
+                                case 'high': return level === 'สูง';
+                                case 'medium': return level === 'ปานกลาง';
+                                case 'low': return level === 'ต่ำ';
+                                default: return true;
+                            }
+                        });
+                    }
+                    
+                    displayInventory(filteredProducts);
+                });
+            });
+
+            // Sort functionality
+            document.getElementById('sortSelect').addEventListener('change', function(e) {
+                const sortBy = e.target.value;
+                let sortedProducts = [...currentProducts];
+                
+                sortedProducts.sort((a, b) => {
+                    switch(sortBy) {
+                        case 'name':
+                            return a.name.localeCompare(b.name);
+                        case 'stock':
+                            return currentStockData[b.sku].current - currentStockData[a.sku].current;
+                        case 'price':
+                            return b.price - a.price;
+                        default:
+                            return 0;
+                    }
+                });
+                
+                displayInventory(sortedProducts);
+            });
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleString('th-TH');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Branch Setup - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .setup-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.9) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 900px;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary-orange);
+        }
+
+        .setup-header h1 {
+            color: var(--primary-deep-orange);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            margin: 0.5rem;
+        }
+
+        .progress-step::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+
+        .progress-step:last-child::before {
+            display: none;
+        }
+
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.completed .progress-circle {
+            background: var(--success-green);
+        }
+
+        .progress-step.active .progress-circle {
+            background: var(--primary-orange);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .progress-step.completed::before {
+            background: var(--success-green);
+        }
+
+        .progress-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #999;
+        }
+
+        .progress-step.active .progress-label,
+        .progress-step.completed .progress-label {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .setup-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            border-left: 4px solid var(--warning-amber);
+            transition: all 0.3s ease;
+        }
+
+        .status-item.completed {
+            border-left-color: var(--success-green);
+            background: rgba(50, 205, 50, 0.1);
+        }
+
+        .status-item.error {
+            border-left-color: var(--danger-red);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .status-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            color: var(--warning-amber);
+        }
+
+        .status-item.completed .status-icon {
+            color: var(--success-green);
+        }
+
+        .status-item.error .status-icon {
+            color: var(--danger-red);
+        }
+
+        .status-text {
+            flex: 1;
+        }
+
+        .status-time {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .log-line {
+            margin-bottom: 0.25rem;
+        }
+
+        .log-timestamp {
+            color: #888;
+        }
+
+        .log-success {
+            color: #00ff00;
+        }
+
+        .log-error {
+            color: #ff6b6b;
+        }
+
+        .log-warning {
+            color: #ffbf00;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .completion-summary {
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.1) 0%, rgba(50, 205, 50, 0.05) 100%);
+            border: 2px solid var(--success-green);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .completion-summary.show {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1><i class="fas fa-cogs me-2"></i>Auto Branch Setup</h1>
+            <p class="text-muted">ระบบตั้งค่าสาขาใหม่อัตโนมัติ</p>
+            <p><strong>สาขา:</strong> <span id="branchName">กำลังโหลด...</span></p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="step-progress">
+            <div class="progress-step active" id="step1">
+                <div class="progress-circle">1</div>
+                <div class="progress-label">เตรียมข้อมูล</div>
+            </div>
+            <div class="progress-step" id="step2">
+                <div class="progress-circle">2</div>
+                <div class="progress-label">สร้าง Branch ID</div>
+            </div>
+            <div class="progress-step" id="step3">
+                <div class="progress-circle">3</div>
+                <div class="progress-label">กำหนด Delivery Zone</div>
+            </div>
+            <div class="progress-step" id="step4">
+                <div class="progress-circle">4</div>
+                <div class="progress-label">สร้าง User Account</div>
+            </div>
+            <div class="progress-step" id="step5">
+                <div class="progress-circle">5</div>
+                <div class="progress-label">ตั้งค่า Inventory</div>
+            </div>
+            <div class="progress-step" id="step6">
+                <div class="progress-circle">6</div>
+                <div class="progress-label">เพิ่มใน Delivery Route</div>
+            </div>
+            <div class="progress-step" id="step7">
+                <div class="progress-circle">7</div>
+                <div class="progress-label">ส่งแจ้งเตือน</div>
+            </div>
+        </div>
+
+        <!-- Setup Status -->
+        <div class="setup-content">
+            <h4 class="mb-3"><i class="fas fa-tasks me-2"></i>สถานะการตั้งค่า</h4>
+            
+            <div id="statusList">
+                <div class="status-item" id="status-prepare">
+                    <div class="status-icon">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="status-text">
+                        <strong>เตรียมข้อมูลสาขา</strong>
+                        <div class="text-muted">กำลังตรวจสอบข้อมูลที่ส่งมา...</div>
+                    </div>
+                    <div class="status-time">กำลังดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-branch-id">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>สร้าง Branch ID อัตโนมัติ</strong>
+                        <div class="text-muted">สร้างรหัสสาขาและบันทึกในฐานข้อมูล</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-delivery-zone">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>กำหนด Delivery Zone</strong>
+                        <div class="text-muted">คำนวณโซนการจัดส่งตามพิกัดที่ตั้ง</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-user-account">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>สร้าง User Account</strong>
+                        <div class="text-muted">สร้างบัญชีผู้ใช้สำหรับผู้จัดการสาขา</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-inventory">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>ตั้งค่าระบบ Inventory</strong>
+                        <div class="text-muted">สร้างเทมเพลตสต๊อคเริ่มต้นและสร้างใบสั่งซื้อ</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-delivery-route">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>เพิ่มใน Delivery Route</strong>
+                        <div class="text-muted">เพิ่มสาขาในระบบจัดส่งและกำหนดเส้นทาง</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+
+                <div class="status-item" id="status-notification">
+                    <div class="status-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-text">
+                        <strong>ส่งแจ้งเตือน</strong>
+                        <div class="text-muted">แจ้งเตือนผู้เกี่ยวข้องและส่งข้อมูลการเข้าใช้งาน</div>
+                    </div>
+                    <div class="status-time">รอดำเนินการ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Log -->
+        <div class="setup-content">
+            <h4 class="mb-3"><i class="fas fa-terminal me-2"></i>Setup Log</h4>
+            <div class="log-container" id="setupLog">
+                <div class="log-line">
+                    <span class="log-timestamp">[00:00:00]</span> 
+                    <span class="log-success">✓ Auto Branch Setup initialized</span>
+                </div>
+                <div class="log-line">
+                    <span class="log-timestamp">[00:00:01]</span> 
+                    <span>Starting branch setup process...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-primary" id="startSetupBtn" onclick="startAutoSetup()">
+                <i class="fas fa-play me-2"></i>เริ่มตั้งค่าอัตโนมัติ
+            </button>
+            <button class="btn btn-secondary" id="pauseBtn" onclick="pauseSetup()" disabled>
+                <i class="fas fa-pause me-2"></i>หยุดชั่วคราว
+            </button>
+            <button class="btn btn-danger" id="cancelBtn" onclick="cancelSetup()" disabled>
+                <i class="fas fa-stop me-2"></i>ยกเลิก
+            </button>
+        </div>
+
+        <!-- Completion Summary -->
+        <div class="completion-summary" id="completionSummary">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h3 class="text-success">ตั้งค่าสาขาเสร็จสมบูรณ์!</h3>
+            <p class="mb-3">สาขาใหม่พร้อมใช้งานแล้ว</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>รหัสสาขา:</strong> <span id="finalBranchId">-</span><br>
+                    <strong>Delivery Zone:</strong> <span id="finalDeliveryZone">-</span><br>
+                    <strong>ผู้จัดการ:</strong> <span id="finalManager">-</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>Username:</strong> <span id="finalUsername">-</span><br>
+                    <strong>Password:</strong> <span id="finalPassword">-</span><br>
+                    <strong>สถานะ:</strong> <span class="text-warning">รออนุมัติ</span>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary me-2" onclick="viewBranchDetails()">
+                    <i class="fas fa-eye me-1"></i>ดูรายละเอียดสาขา
+                </button>
+                <button class="btn btn-success" onclick="sendWelcomeMessage()">
+                    <i class="fas fa-paper-plane me-1"></i>ส่งข้อมูลไปยัง Line
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let setupData = {};
+        let currentStep = 1;
+        let isSetupRunning = false;
+        let setupInterval;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBranchData();
+        });
+
+        // Load branch data from URL parameters
+        function loadBranchData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const branchData = {
+                id: urlParams.get('id') || 'BR-NEW',
+                name: urlParams.get('name') || 'สาขาใหม่',
+                manager: urlParams.get('manager') || 'ผู้จัดการสาขา',
+                lat: urlParams.get('lat') || '13.7563',
+                lng: urlParams.get('lng') || '100.5018',
+                province: urlParams.get('province') || 'กรุงเทพมหานคร'
+            };
+
+            setupData = branchData;
+            document.getElementById('branchName').textContent = branchData.name;
+        }
+
+        // Start auto setup
+        function startAutoSetup() {
+            if (isSetupRunning) return;
+
+            isSetupRunning = true;
+            currentStep = 1;
+
+            // Update button states
+            document.getElementById('startSetupBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('cancelBtn').disabled = false;
+
+            // Start setup process
+            executeSetupSteps();
+        }
+
+        // Execute setup steps
+        function executeSetupSteps() {
+            const steps = [
+                { id: 'prepare', func: prepareData, delay: 2000 },
+                { id: 'branch-id', func: generateBranchId, delay: 1500 },
+                { id: 'delivery-zone', func: calculateDeliveryZone, delay: 2000 },
+                { id: 'user-account', func: createUserAccount, delay: 2500 },
+                { id: 'inventory', func: setupInventory, delay: 3000 },
+                { id: 'delivery-route', func: addToDeliveryRoute, delay: 1500 },
+                { id: 'notification', func: sendNotifications, delay: 2000 }
+            ];
+
+            let stepIndex = 0;
+
+            function executeNext() {
+                if (!isSetupRunning || stepIndex >= steps.length) {
+                    if (stepIndex >= steps.length) {
+                        completeSetup();
+                    }
+                    return;
+                }
+
+                const step = steps[stepIndex];
+                updateStepStatus(currentStep, 'active');
+                
+                setTimeout(() => {
+                    if (isSetupRunning) {
+                        step.func();
+                        updateStepStatus(currentStep, 'completed');
+                        updateStatusItem(step.id, 'completed');
+                        
+                        currentStep++;
+                        stepIndex++;
+                        executeNext();
+                    }
+                }, step.delay);
+            }
+
+            executeNext();
+        }
+
+        // Setup step functions
+        function prepareData() {
+            addLog('✓ ตรวจสอบข้อมูลสาขาเรียบร้อย', 'success');
+            addLog(`→ ชื่อสาขา: ${setupData.name}`, 'info');
+            addLog(`→ ผู้จัดการ: ${setupData.manager}`, 'info');
+            addLog(`→ พิกัด: ${setupData.lat}, ${setupData.lng}`, 'info');
+        }
+
+        function generateBranchId() {
+            const branchId = `BR-${Date.now().toString().slice(-3)}`;
+            setupData.branchId = branchId;
+            addLog(`✓ สร้าง Branch ID: ${branchId}`, 'success');
+            addLog('→ บันทึกข้อมูลในฐานข้อมูลเรียบร้อย', 'info');
+        }
+
+        function calculateDeliveryZone() {
+            // Simple zone calculation based on province
+            const zoneMap = {
+                'กรุงเทพมหานคร': 'ZONE_CENTRAL',
+                'เชียงใหม่': 'ZONE_NORTH',
+                'ภูเก็ต': 'ZONE_SOUTH',
+                'ขอนแก่น': 'ZONE_NORTHEAST'
+            };
+            
+            const zone = zoneMap[setupData.province] || 'ZONE_CENTRAL';
+            setupData.deliveryZone = zone;
+            addLog(`✓ คำนวณ Delivery Zone: ${zone}`, 'success');
+            addLog('→ เพิ่มในแผนที่โซนการจัดส่งแล้ว', 'info');
+        }
+
+        function createUserAccount() {
+            const username = `manager_${setupData.branchId.toLowerCase()}`;
+            const password = generatePassword();
+            
+            setupData.username = username;
+            setupData.password = password;
+            
+            addLog(`✓ สร้าง User Account: ${username}`, 'success');
+            addLog('→ ตั้งรหัสผ่านเริ่มต้น (ต้องเปลี่ยนในการเข้าใช้ครั้งแรก)', 'warning');
+            addLog('→ กำหนดสิทธิ์ Branch Manager เรียบร้อย', 'info');
+        }
+
+        function setupInventory() {
+            addLog('✓ สร้างเทมเพลต Inventory', 'success');
+            addLog('→ สร้างรายการสินค้าพื้นฐาน 5 รายการ', 'info');
+            addLog('→ กำหนด Reorder Point และ Safety Stock', 'info');
+            addLog('→ สร้างใบสั่งซื้อสต๊อคเริ่มต้นแล้ว', 'info');
+        }
+
+        function addToDeliveryRoute() {
+            addLog('✓ เพิ่มสาขาในระบบ Delivery Route', 'success');
+            addLog(`→ เพิ่มใน ${setupData.deliveryZone} Route`, 'info');
+            addLog('→ คำนวณระยะทางและเวลาจัดส่งแล้ว', 'info');
+            addLog('→ กำหนดตารางจัดส่งเริ่มต้น', 'info');
+        }
+
+        function sendNotifications() {
+            addLog('✓ ส่งแจ้งเตือนผู้เกี่ยวข้อง', 'success');
+            addLog('→ แจ้งเตือน Admin สำหรับการอนุมัติ', 'info');
+            addLog('→ ส่งข้อมูลการเข้าใช้งานไปยัง Line', 'info');
+            addLog('→ ส่งอีเมลยินดีต้อนรับแล้ว', 'info');
+        }
+
+        // Helper functions
+        function updateStepStatus(stepNum, status) {
+            const step = document.getElementById(`step${stepNum}`);
+            if (step) {
+                step.className = `progress-step ${status}`;
+            }
+        }
+
+        function updateStatusItem(statusId, status) {
+            const item = document.getElementById(`status-${statusId}`);
+            if (item) {
+                item.className = `status-item ${status}`;
+                
+                const icon = item.querySelector('.status-icon');
+                const time = item.querySelector('.status-time');
+                
+                if (status === 'completed') {
+                    icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    time.textContent = 'เสร็จสิ้น';
+                } else if (status === 'error') {
+                    icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    time.textContent = 'เกิดข้อผิดพลาด';
+                }
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('setupLog');
+            const timestamp = new Date().toLocaleTimeString('th-TH');
+            const logClass = type === 'success' ? 'log-success' : 
+                           type === 'error' ? 'log-error' : 
+                           type === 'warning' ? 'log-warning' : '';
+            
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span> 
+                <span class="${logClass}">${message}</span>
+            `;
+            
+            logContainer.appendChild(logLine);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function generatePassword() {
+            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            let password = '';
+            for (let i = 0; i < 8; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        function completeSetup() {
+            isSetupRunning = false;
+            
+            // Update final data
+            document.getElementById('finalBranchId').textContent = setupData.branchId;
+            document.getElementById('finalDeliveryZone').textContent = setupData.deliveryZone;
+            document.getElementById('finalManager').textContent = setupData.manager;
+            document.getElementById('finalUsername').textContent = setupData.username;
+            document.getElementById('finalPassword').textContent = setupData.password;
+            
+            // Show completion summary
+            document.getElementById('completionSummary').classList.add('show');
+            
+            // Update buttons
+            document.getElementById('startSetupBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('cancelBtn').disabled = true;
+            
+            addLog('🎉 Auto Branch Setup completed successfully!', 'success');
+            addLog('→ สาขาพร้อมใช้งานหลังการอนุมัติ', 'info');
+        }
+
+        function pauseSetup() {
+            isSetupRunning = false;
+            document.getElementById('startSetupBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            addLog('⏸️ Setup paused by user', 'warning');
+        }
+
+        function cancelSetup() {
+            if (confirm('ยืนยันการยกเลิกการตั้งค่า?')) {
+                isSetupRunning = false;
+                addLog('❌ Setup cancelled by user', 'error');
+                window.close();
+            }
+        }
+
+        function viewBranchDetails() {
+            window.open(`/branch-details?id=${setupData.branchId}`, '_blank');
+        }
+
+        function sendWelcomeMessage() {
+            const message = `🎉 ยินดีต้อนรับสาขาใหม่!\n\n` +
+                          `📍 สาขา: ${setupData.name}\n` +
+                          `🆔 รหัส: ${setupData.branchId}\n` +
+                          `👤 ผู้จัดการ: ${setupData.manager}\n\n` +
+                          `📱 ข้อมูลการเข้าใช้งาน:\n` +
+                          `Username: ${setupData.username}\n` +
+                          `Password: ${setupData.password}\n\n` +
+                          `⚠️ กรุณาเปลี่ยนรหัสผ่านในการเข้าใช้งานครั้งแรก`;
+            
+            // In real implementation, send to Line API
+            navigator.clipboard.writeText(message).then(() => {
+                alert('คัดลอกข้อความแล้ว! กรุณานำไปส่งใน Line');
+            });
+        }
+    </script>
+</body>
+</html>

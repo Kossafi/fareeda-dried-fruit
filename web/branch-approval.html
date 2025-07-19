@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อนุมัติสาขาใหม่ - ระบบจัดการสต๊อคผลไม้อบแห้ง</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .approval-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 5px 15px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .pending-badge {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #FFD700 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .approval-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border-left: 4px solid var(--warning-amber);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .approval-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--warning-amber) 0%, var(--primary-gold) 100%);
+        }
+
+        .approval-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow-soft);
+        }
+
+        .approval-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .branch-info {
+            flex: 1;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, var(--success-green) 0%, #28a745 100%);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(50, 205, 50, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #dc3545 100%);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 165, 0, 0.4);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            background: var(--bg-light-yellow);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-brown);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .timeline-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-orange);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: 600;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-time {
+            color: #666;
+            font-size: 0.875rem;
+            margin-left: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-brown);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .approval-modal .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+        }
+
+        .approval-modal .modal-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 20px 20px 0 0;
+            border-bottom: none;
+        }
+
+        .priority-high {
+            border-left-color: var(--danger-red);
+        }
+
+        .priority-medium {
+            border-left-color: var(--warning-amber);
+        }
+
+        .priority-low {
+            border-left-color: var(--success-green);
+        }
+
+        .filter-tab {
+            background: transparent;
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-tab.active,
+        .filter-tab:hover {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .urgent-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: var(--danger-red);
+            border-radius: 50%;
+            animation: ping 1s infinite;
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .bulk-actions {
+            background: var(--bg-light-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px dashed var(--primary-orange);
+            display: none;
+        }
+
+        .bulk-actions.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/branch-management">
+                <i class="fas fa-arrow-left me-2"></i>อนุมัติสาขาใหม่
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="pending-badge me-3">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="pendingCount">3</span> สาขารออนุมัติ
+                </span>
+                <button class="btn btn-outline-light" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-1"></i>รีเฟรช
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-3">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value text-warning" id="totalPending">3</div>
+                <div class="stat-label">รออนุมัติ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-success" id="approvedToday">12</div>
+                <div class="stat-label">อนุมัติวันนี้</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-danger" id="rejectedToday">1</div>
+                <div class="stat-label">ปฏิเสธวันนี้</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value text-info" id="avgApprovalTime">2.5</div>
+                <div class="stat-label">ชั่วโมง (เฉลี่ย)</div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="mb-3">
+            <button class="filter-tab active" onclick="filterByPriority('all')">ทั้งหมด</button>
+            <button class="filter-tab" onclick="filterByPriority('urgent')">เร่งด่วน</button>
+            <button class="filter-tab" onclick="filterByPriority('high')">สำคัญ</button>
+            <button class="filter-tab" onclick="filterByPriority('medium')">ปกติ</button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <div class="d-flex justify-content-between align-items-center">
+                <span><strong id="selectedCount">0</strong> สาขาที่เลือก</span>
+                <div>
+                    <button class="btn btn-sm btn-approve me-2" onclick="bulkApprove()">
+                        <i class="fas fa-check me-1"></i>อนุมัติทั้งหมด
+                    </button>
+                    <button class="btn btn-sm btn-reject" onclick="bulkReject()">
+                        <i class="fas fa-times me-1"></i>ปฏิเสธทั้งหมด
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div id="approvalsList">
+            <!-- Approval cards will be dynamically loaded here -->
+        </div>
+
+        <!-- Recent Activities Timeline -->
+        <div class="timeline-container">
+            <h5 class="mb-3"><i class="fas fa-history me-2"></i>กิจกรรมล่าสุด</h5>
+            <div id="activityTimeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <strong>อนุมัติสาขาขอนแก่น เซ็นทรัลพลาซ่า</strong>
+                        <div class="text-muted">โดย Admin หลัก</div>
+                    </div>
+                    <div class="timeline-time">15 นาทีที่แล้ว</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <strong>สาขาใหม่ส่งขออนุมัติ: สาขาหาดใหญ่</strong>
+                        <div class="text-muted">รออนุมัติจากผู้บริหาร</div>
+                    </div>
+                    <div class="timeline-time">1 ชั่วโมงที่แล้ว</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <strong>ปฏิเสธสาขาอุบลราชธานี</strong>
+                        <div class="text-muted">เหตุผล: ข้อมูลไม่ครบถ้วน</div>
+                    </div>
+                    <div class="timeline-time">3 ชั่วโมงที่แล้ว</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div class="modal fade approval-modal" id="approvalModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-dark">
+                        <i class="fas fa-clipboard-check me-2"></i>ตรวจสอบการอนุมัติ
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent">
+                        <!-- Modal content will be dynamically loaded -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-reject me-2" onclick="modalReject()">
+                        <i class="fas fa-times me-1"></i>ปฏิเสธ
+                    </button>
+                    <button type="button" class="btn btn-approve" onclick="modalApprove()">
+                        <i class="fas fa-check me-1"></i>อนุมัติ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div class="modal fade" id="rejectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>เหตุผลการปฏิเสธ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">กรุณาระบุเหตุผลในการปฏิเสธ:</label>
+                        <textarea class="form-control" id="rejectionReason" rows="4" 
+                            placeholder="เช่น ข้อมูลไม่ครบถ้วน, ตำแหน่งไม่เหมาะสม, เอกสารไม่ชัดเจน..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ข้อเสนอแนะ (ไม่บังคับ):</label>
+                        <textarea class="form-control" id="rejectionSuggestion" rows="3" 
+                            placeholder="ข้อเสนอแนะสำหรับการปรับปรุง..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmRejection()">
+                        <i class="fas fa-times me-1"></i>ยืนยันการปฏิเสธ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let pendingBranches = [];
+        let selectedBranches = [];
+        let currentBranchForApproval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPendingBranches();
+            
+            // Auto refresh every 30 seconds
+            setInterval(refreshData, 30000);
+        });
+
+        // Load pending branches
+        async function loadPendingBranches() {
+            try {
+                // In real implementation, fetch from API
+                // const response = await fetch('/api/branches?status=PENDING');
+                // const data = await response.json();
+                
+                // Mock data for demo
+                pendingBranches = [
+                    {
+                        id: "BR-005",
+                        name: "สาขาขอนแก่น เซ็นทรัลพลาซ่า",
+                        type: "STANDARD",
+                        address: "เซ็นทรัลพลาซ่าขอนแก่น ชั้น 1 เลขที่ 1/1 ถนนศรีจันทร์ ตำบลในเมือง อำเภอเมืองขอนแก่น ขอนแก่น 40000",
+                        manager: "นางวิไลวรรณ สุขใส",
+                        managerPhone: "081-999-8888",
+                        submittedDate: "2024-07-10T09:00:00Z",
+                        priority: "high",
+                        estimatedRevenue: 500000,
+                        estimatedCost: 250000,
+                        competition: "สูง",
+                        marketPotential: "ดี",
+                        urgentReason: "แข่งขันสูง ต้องเปิดก่อนคู่แข่ง"
+                    },
+                    {
+                        id: "BR-006",
+                        name: "สาขาสงขลา หาดใหญ่",
+                        type: "STANDARD",
+                        address: "ถนนนิพัทธ์อุทิศ 3 ตำบลหาดใหญ่ อำเภอหาดใหญ่ สงขลา 90110",
+                        manager: "นายประเสริฐ รักดี",
+                        managerPhone: "086-777-6666",
+                        submittedDate: "2024-07-15T09:00:00Z",
+                        priority: "medium",
+                        estimatedRevenue: 400000,
+                        estimatedCost: 200000,
+                        competition: "ปานกลาง",
+                        marketPotential: "ดี",
+                        urgentReason: null
+                    },
+                    {
+                        id: "BR-007", 
+                        name: "สาขาภูเก็ต ป่าตอง Express",
+                        type: "EXPRESS",
+                        address: "ถนนบางลา ตำบลป่าตอง อำเภอกะทู้ ภูเก็ต 83150",
+                        manager: "นางสาวศิริพร ใสใส",
+                        managerPhone: "087-111-2222",
+                        submittedDate: "2024-07-18T09:00:00Z",
+                        priority: "urgent",
+                        estimatedRevenue: 300000,
+                        estimatedCost: 150000,
+                        competition: "สูงมาก",
+                        marketPotential: "ดีมาก",
+                        urgentReason: "ฤดูกาลท่องเที่ยว ต้องเปิดทันที"
+                    }
+                ];
+                
+                displayPendingBranches(pendingBranches);
+                updateStatistics();
+                
+            } catch (error) {
+                console.error('Error loading pending branches:', error);
+            }
+        }
+
+        // Display pending branches
+        function displayPendingBranches(branches) {
+            const container = document.getElementById('approvalsList');
+            container.innerHTML = '';
+
+            branches.forEach(branch => {
+                const priorityClass = `priority-${branch.priority}`;
+                const isUrgent = branch.priority === 'urgent';
+                const submittedTime = formatTimeAgo(branch.submittedDate);
+                
+                const branchCard = `
+                    <div class="approval-card ${priorityClass}" data-branch-id="${branch.id}">
+                        ${isUrgent ? '<div class="urgent-indicator"></div>' : ''}
+                        <div class="approval-header">
+                            <div class="branch-info">
+                                <div class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" class="form-check-input me-2" 
+                                        onchange="toggleBranchSelection('${branch.id}', this.checked)">
+                                    <h5 class="mb-0 me-2">${branch.name}</h5>
+                                    <span class="badge bg-${getPriorityColor(branch.priority)} ms-2">
+                                        ${getPriorityText(branch.priority)}
+                                    </span>
+                                </div>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>${branch.address}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-user-tie me-1"></i>ผู้จัดการ: ${branch.manager} 
+                                    <span class="ms-3"><i class="fas fa-phone me-1"></i>${branch.managerPhone}</span>
+                                </p>
+                                <small class="text-muted">ส่งขออนุมัติ: ${submittedTime}</small>
+                                ${branch.urgentReason ? `<div class="alert alert-warning alert-sm mt-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i>${branch.urgentReason}</div>` : ''}
+                            </div>
+                            <div class="approval-actions">
+                                <button class="btn btn-view btn-sm" onclick="viewBranchDetails('${branch.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-approve btn-sm" onclick="showApprovalModal('${branch.id}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-reject btn-sm" onclick="showRejectionModal('${branch.id}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">ประเภทสาขา</div>
+                                <div class="info-value">${branch.type}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">รายได้คาดการณ์</div>
+                                <div class="info-value">฿${branch.estimatedRevenue.toLocaleString()}/เดือน</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">ต้นทุนคาดการณ์</div>
+                                <div class="info-value">฿${branch.estimatedCost.toLocaleString()}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">การแข่งขัน</div>
+                                <div class="info-value">${branch.competition}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">ศักยภาพตลาด</div>
+                                <div class="info-value">${branch.marketPotential}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">ROI คาดการณ์</div>
+                                <div class="info-value">${Math.round((branch.estimatedRevenue * 12 - branch.estimatedCost) / branch.estimatedCost * 100)}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML += branchCard;
+            });
+        }
+
+        // Helper functions
+        function getPriorityColor(priority) {
+            switch (priority) {
+                case 'urgent': return 'danger';
+                case 'high': return 'warning';
+                case 'medium': return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        function getPriorityText(priority) {
+            switch (priority) {
+                case 'urgent': return 'เร่งด่วน';
+                case 'high': return 'สำคัญ';
+                case 'medium': return 'ปกติ';
+                default: return 'ต่ำ';
+            }
+        }
+
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+            
+            if (diffInHours < 1) {
+                return Math.round(diffInHours * 60) + ' นาทีที่แล้ว';
+            } else if (diffInHours < 24) {
+                return Math.round(diffInHours) + ' ชั่วโมงที่แล้ว';
+            } else {
+                return Math.round(diffInHours / 24) + ' วันที่แล้ว';
+            }
+        }
+
+        // Filter functions
+        function filterByPriority(priority) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter branches
+            let filtered = pendingBranches;
+            if (priority !== 'all') {
+                filtered = pendingBranches.filter(branch => branch.priority === priority);
+            }
+
+            displayPendingBranches(filtered);
+        }
+
+        // Selection functions
+        function toggleBranchSelection(branchId, isSelected) {
+            if (isSelected) {
+                if (!selectedBranches.includes(branchId)) {
+                    selectedBranches.push(branchId);
+                }
+            } else {
+                selectedBranches = selectedBranches.filter(id => id !== branchId);
+            }
+
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = selectedBranches.length;
+            
+            if (selectedBranches.length > 0) {
+                bulkActions.classList.add('show');
+            } else {
+                bulkActions.classList.remove('show');
+            }
+        }
+
+        // Approval functions
+        function showApprovalModal(branchId) {
+            currentBranchForApproval = branchId;
+            const branch = pendingBranches.find(b => b.id === branchId);
+            
+            const modalContent = `
+                <div class="text-center mb-3">
+                    <i class="fas fa-check-circle fa-4x text-success"></i>
+                    <h4 class="mt-3">ยืนยันการอนุมัติสาขา</h4>
+                </div>
+                <div class="alert alert-info">
+                    <strong>สาขา:</strong> ${branch.name}<br>
+                    <strong>ผู้จัดการ:</strong> ${branch.manager}<br>
+                    <strong>รายได้คาดการณ์:</strong> ฿${branch.estimatedRevenue.toLocaleString()}/เดือน
+                </div>
+                <p>เมื่ออนุมัติแล้ว ระบบจะ:</p>
+                <ul>
+                    <li>เปิดใช้งานสาขาทันที</li>
+                    <li>สร้างบัญชีผู้ใช้สำหรับผู้จัดการ</li>
+                    <li>ตั้งค่าระบบ Inventory และ POS</li>
+                    <li>เพิ่มในเส้นทางจัดส่ง</li>
+                    <li>ส่งแจ้งเตือนไปยังผู้เกี่ยวข้อง</li>
+                </ul>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = modalContent;
+            
+            const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+            modal.show();
+        }
+
+        function showRejectionModal(branchId) {
+            currentBranchForApproval = branchId;
+            const modal = new bootstrap.Modal(document.getElementById('rejectionModal'));
+            modal.show();
+        }
+
+        async function modalApprove() {
+            if (!currentBranchForApproval) return;
+
+            try {
+                // In real implementation, send approval request
+                // await fetch(`/api/branches/${currentBranchForApproval}/approve`, { method: 'POST' });
+                
+                // Update UI
+                removeBranchFromPending(currentBranchForApproval);
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                
+                // Show success message
+                showNotification('อนุมัติสาขาเรียบร้อยแล้ว', 'success');
+                
+                // Auto-launch setup
+                const branch = pendingBranches.find(b => b.id === currentBranchForApproval);
+                if (branch) {
+                    setTimeout(() => {
+                        const setupUrl = `/auto-branch-setup?id=${branch.id}&name=${encodeURIComponent(branch.name)}&manager=${encodeURIComponent(branch.manager)}`;
+                        window.open(setupUrl, '_blank', 'width=1000,height=700');
+                    }, 1000);
+                }
+                
+                currentBranchForApproval = null;
+                
+            } catch (error) {
+                showNotification('เกิดข้อผิดพลาดในการอนุมัติ', 'error');
+            }
+        }
+
+        function confirmRejection() {
+            const reason = document.getElementById('rejectionReason').value.trim();
+            const suggestion = document.getElementById('rejectionSuggestion').value.trim();
+            
+            if (!reason) {
+                alert('กรุณาระบุเหตุผลการปฏิเสธ');
+                return;
+            }
+
+            // In real implementation, send rejection request
+            // await fetch(`/api/branches/${currentBranchForApproval}/reject`, {
+            //     method: 'POST',
+            //     body: JSON.stringify({ reason, suggestion })
+            // });
+
+            // Update UI
+            removeBranchFromPending(currentBranchForApproval);
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+            
+            // Clear form
+            document.getElementById('rejectionReason').value = '';
+            document.getElementById('rejectionSuggestion').value = '';
+            
+            showNotification('ปฏิเสธสาขาเรียบร้อยแล้ว', 'warning');
+            
+            currentBranchForApproval = null;
+        }
+
+        // Bulk operations
+        function bulkApprove() {
+            if (selectedBranches.length === 0) return;
+            
+            if (confirm(`ยืนยันการอนุมัติ ${selectedBranches.length} สาขา?`)) {
+                selectedBranches.forEach(branchId => {
+                    removeBranchFromPending(branchId);
+                });
+                
+                selectedBranches = [];
+                updateBulkActions();
+                showNotification('อนุมัติสาขาทั้งหมดเรียบร้อยแล้ว', 'success');
+            }
+        }
+
+        function bulkReject() {
+            if (selectedBranches.length === 0) return;
+            
+            const reason = prompt('กรุณาระบุเหตุผลการปฏิเสธ:');
+            if (reason) {
+                selectedBranches.forEach(branchId => {
+                    removeBranchFromPending(branchId);
+                });
+                
+                selectedBranches = [];
+                updateBulkActions();
+                showNotification('ปฏิเสธสาขาทั้งหมดเรียบร้อยแล้ว', 'warning');
+            }
+        }
+
+        // Utility functions
+        function removeBranchFromPending(branchId) {
+            pendingBranches = pendingBranches.filter(b => b.id !== branchId);
+            displayPendingBranches(pendingBranches);
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            document.getElementById('totalPending').textContent = pendingBranches.length;
+            document.getElementById('pendingCount').textContent = pendingBranches.length;
+        }
+
+        function viewBranchDetails(branchId) {
+            window.open(`/branch-details?id=${branchId}`, '_blank');
+        }
+
+        function refreshData() {
+            loadPendingBranches();
+            showNotification('รีเฟรชข้อมูลเรียบร้อยแล้ว', 'info');
+        }
+
+        function showNotification(message, type) {
+            // Simple notification - in real implementation, use toast library
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

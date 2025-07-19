@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders - ระบบจัดซื้อสินค้า</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥭</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-orange: #FFA500;
+            --primary-deep-orange: #FF8C00;
+            --bg-cream: #FFF8DC;
+            --bg-light-yellow: #FFFACD;
+            --bg-warm-white: #FEFEF7;
+            --text-dark: #2C1810;
+            --text-brown: #8B4513;
+            --success-green: #32CD32;
+            --warning-amber: #FFBF00;
+            --danger-red: #FF6B6B;
+            --info-blue: #17A2B8;
+            --shadow-warm: rgba(255, 165, 0, 0.15);
+            --shadow-soft: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light-yellow) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px var(--shadow-warm);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark) !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 10px 20px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .purchase-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-soft);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .purchase-interface {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .supplier-selection {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            margin-bottom: 2rem;
+        }
+
+        .supplier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .supplier-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .supplier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px var(--shadow-warm);
+            border-color: var(--primary-orange);
+        }
+
+        .supplier-card.selected {
+            border-color: var(--primary-orange);
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+        }
+
+        .supplier-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .supplier-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .supplier-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .supplier-type {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .supplier-details {
+            font-size: 0.85rem;
+            color: var(--text-brown);
+        }
+
+        .supplier-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .product-catalog {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            margin-bottom: 2rem;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 5px 20px var(--shadow-soft);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px var(--shadow-warm);
+            border-color: var(--primary-orange);
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-deep-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-unit {
+            font-size: 0.9rem;
+            color: var(--text-brown);
+            margin-bottom: 1rem;
+        }
+
+        .product-stock {
+            font-size: 0.8rem;
+            color: var(--success-green);
+            margin-bottom: 1rem;
+        }
+
+        .cart-summary {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            color: var(--text-dark);
+            position: sticky;
+            top: 2rem;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-details {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .qty-control {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .qty-control:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            padding: 0.25rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cart-total {
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .total-final {
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            padding-top: 0.5rem;
+        }
+
+        .order-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        .order-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .order-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .order-history {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 220, 0.8) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+        }
+
+        .order-item {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-id {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, var(--warning-amber) 0%, #DAA520 100%);
+            color: var(--text-dark);
+        }
+
+        .status-approved {
+            background: linear-gradient(135deg, var(--info-blue) 0%, #007B8F 100%);
+            color: white;
+        }
+
+        .status-delivered {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            color: white;
+        }
+
+        .status-rejected {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            color: white;
+        }
+
+        .order-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-brown);
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #FF4444 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-deep-orange) 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #228B22 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(50, 205, 50, 0.4);
+        }
+
+        .form-control {
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            border: 2px solid var(--primary-orange);
+            background: transparent;
+            color: var(--primary-orange);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .filter-tab.active {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px var(--shadow-warm);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--shadow-warm);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-brown);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px var(--shadow-soft);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-orange) 100%);
+            color: var(--text-dark);
+            border-radius: 20px 20px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            .purchase-interface {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-summary {
+                position: static;
+                max-height: none;
+            }
+            
+            .supplier-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i>
+                ระบบจัดการสต๊อคผลไม้อบแห้ง
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-boxes"></i> สต๊อค
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sales">
+                            <i class="fas fa-shopping-cart"></i> ขาย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/delivery">
+                            <i class="fas fa-truck"></i> จัดส่ง
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/purchase">
+                            <i class="fas fa-shopping-bag"></i> จัดซื้อ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> รายงาน
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/goods-receipt">
+                            <i class="fas fa-truck-loading"></i> รับสินค้า
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <!-- Page Header -->
+        <div class="purchase-card">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-shopping-bag text-primary"></i>
+                        ระบบจัดซื้อสินค้า
+                    </h1>
+                    <p class="text-muted mt-2">Purchase Order System - จัดซื้อผลไม้อบแห้งจากซัพพลายเออร์</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-primary" onclick="viewPendingOrders()">
+                            <i class="fas fa-clock"></i> รอการอนุมัติ
+                        </button>
+                        <button class="btn btn-success" onclick="newPurchaseOrder()">
+                            <i class="fas fa-plus"></i> สั่งซื้อใหม่
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div class="stat-number" id="totalOrders">0</div>
+                <div class="stat-label">ใบสั่งซื้อเดือนนี้</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number" id="pendingOrders">0</div>
+                <div class="stat-label">รอการอนุมัติ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-number" id="totalValue">฿0</div>
+                <div class="stat-label">มูลค่าการสั่งซื้อ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number" id="activeSuppliers">0</div>
+                <div class="stat-label">ซัพพลายเออร์ใช้งาน</div>
+            </div>
+        </div>
+
+        <!-- Supplier Selection -->
+        <div class="supplier-selection" id="supplierSection">
+            <h4 class="mb-3">
+                <i class="fas fa-building"></i> 
+                เลือกซัพพลายเออร์
+                <span class="badge bg-primary ms-2" id="supplierCount">0</span>
+            </h4>
+            <div class="supplier-grid" id="supplierGrid">
+                <!-- Suppliers will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Product Catalog -->
+        <div class="product-catalog" id="productSection" style="display: none;">
+            <h4 class="mb-3">
+                <i class="fas fa-apple-alt"></i> 
+                รายการสินค้า - <span id="selectedSupplierName">-</span>
+                <span class="badge bg-success ms-2" id="productCount">0</span>
+            </h4>
+            <div class="product-grid" id="productGrid">
+                <!-- Products will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Purchase Interface -->
+        <div class="purchase-interface" id="purchaseInterface" style="display: none;">
+            <!-- Product Selection Area -->
+            <div>
+                <div class="product-catalog">
+                    <h4 class="mb-3">
+                        <i class="fas fa-shopping-cart"></i> 
+                        เลือกสินค้าเพื่อสั่งซื้อ
+                    </h4>
+                    <div class="product-grid" id="purchaseProductGrid">
+                        <!-- Products for purchase will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shopping Cart -->
+            <div class="cart-summary">
+                <h4 class="mb-3">
+                    <i class="fas fa-shopping-cart"></i> 
+                    ตะกร้าสั่งซื้อ
+                    <span class="badge bg-light text-dark ms-2" id="cartItemCount">0</span>
+                </h4>
+                
+                <div id="cartItems">
+                    <div class="text-center text-muted" id="emptyCart">
+                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                        <p>ยังไม่มีสินค้าในตะกร้า</p>
+                    </div>
+                </div>
+                
+                <div class="cart-total" id="cartTotal" style="display: none;">
+                    <div class="total-line">
+                        <span>รวมสินค้า:</span>
+                        <span id="subtotal">฿0.00</span>
+                    </div>
+                    <div class="total-line">
+                        <span>ส่วนลด:</span>
+                        <span id="discount">฿0.00</span>
+                    </div>
+                    <div class="total-line">
+                        <span>ภาษี (7%):</span>
+                        <span id="tax">฿0.00</span>
+                    </div>
+                    <div class="total-line total-final">
+                        <span>ยอดรวม:</span>
+                        <span id="grandTotal">฿0.00</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">วันที่ส่งมอบที่ต้องการ</label>
+                    <input type="date" class="form-control" id="deliveryDate" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">หมายเหตุ</label>
+                    <textarea class="form-control" id="orderNotes" rows="3" placeholder="ข้อมูลเพิ่มเติมสำหรับการสั่งซื้อ"></textarea>
+                </div>
+                
+                <button class="order-btn" id="submitOrderBtn" onclick="submitPurchaseOrder()" disabled>
+                    <i class="fas fa-paper-plane"></i> ส่งใบสั่งซื้อ
+                </button>
+                
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-primary btn-sm flex-fill" onclick="printPurchaseOrder()">
+                        <i class="fas fa-print"></i> ปริ้นท์ใบสั่งซื้อ
+                    </button>
+                    <button class="btn btn-warning btn-sm flex-fill" onclick="clearCart()">
+                        <i class="fas fa-trash"></i> ล้างตะกร้า
+                    </button>
+                    <button class="btn btn-info btn-sm flex-fill" onclick="saveAsDraft()">
+                        <i class="fas fa-save"></i> บันทึก Draft
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchase Order History -->
+        <div class="order-history">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>ประวัติการสั่งซื้อ</h4>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+                    <button class="filter-tab" data-filter="pending">รอการอนุมัติ</button>
+                    <button class="filter-tab" data-filter="approved">อนุมัติแล้ว</button>
+                    <button class="filter-tab" data-filter="delivered">ส่งมอบแล้ว</button>
+                </div>
+            </div>
+            <div id="orderHistoryList">
+                <!-- Order history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Order Modal -->
+    <div class="modal fade" id="purchaseOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">รายละเอียดใบสั่งซื้อ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="orderModalContent">
+                        <!-- Order details will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <div id="orderModalActions">
+                        <!-- Action buttons will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let suppliers = [];
+        let products = [];
+        let selectedSupplier = null;
+        let cart = [];
+        let orderHistory = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateMockData();
+            loadSuppliers();
+            loadOrderHistory();
+            updateStats();
+            initializeFilters();
+            setDefaultDeliveryDate();
+        });
+
+        function generateMockData() {
+            // Mock suppliers
+            suppliers = [
+                {
+                    id: 1,
+                    name: 'บริษัท ผลไม้อบแห้งไทย จำกัด',
+                    type: 'ผลไม้อบแห้งคุณภาพสูง',
+                    contact: '02-123-4567',
+                    email: 'info@thaidriedfruits.com',
+                    address: 'สวนจตุจักร กทม.',
+                    rating: 4.8,
+                    logo: '🥭',
+                    products: [
+                        { id: 1, name: 'มะม่วงอบแห้ง', price: 850, unit: 'กิโลกรัม', stock: 500, image: '🥭' },
+                        { id: 2, name: 'ลูกเกดอบแห้ง', price: 720, unit: 'กิโลกรัม', stock: 300, image: '🍇' },
+                        { id: 3, name: 'แอปเปิ้ลอบแห้ง', price: 780, unit: 'กิโลกรัม', stock: 200, image: '🍎' }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: 'สหกรณ์เกษตรกรผลไม้',
+                    type: 'ผลไม้อบแห้งออร์แกนิก',
+                    contact: '02-567-8901',
+                    email: 'organic@fruitcoop.com',
+                    address: 'ราชบุรี',
+                    rating: 4.6,
+                    logo: '🍌',
+                    products: [
+                        { id: 4, name: 'กล้วยอบแห้ง', price: 650, unit: 'กิโลกรัม', stock: 400, image: '🍌' },
+                        { id: 5, name: 'สับปะรดอบแห้ง', price: 900, unit: 'กิโลกรัม', stock: 150, image: '🍍' },
+                        { id: 6, name: 'ขนุนอบแห้ง', price: 750, unit: 'กิโลกรัม', stock: 100, image: '🥥' }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: 'เนเจอรัล ดรายฟรุ้ต',
+                    type: 'ผลไม้อบแห้งธรรมชาติ',
+                    contact: '02-234-5678',
+                    email: 'natural@driedfruit.co.th',
+                    address: 'เชียงใหม่',
+                    rating: 4.7,
+                    logo: '🍓',
+                    products: [
+                        { id: 7, name: 'สตรอว์เบอร์รี่อบแห้ง', price: 1200, unit: 'กิโลกรัม', stock: 80, image: '🍓' },
+                        { id: 8, name: 'บลูเบอร์รี่อบแห้ง', price: 1500, unit: 'กิโลกรัม', stock: 60, image: '🫐' },
+                        { id: 9, name: 'ลิ้นจี่อบแห้ง', price: 950, unit: 'กิโลกรัม', stock: 120, image: '🍒' }
+                    ]
+                }
+            ];
+
+            // Mock order history
+            orderHistory = [
+                {
+                    id: 'PO-2024-001',
+                    supplier: 'บริษัท ผลไม้อบแห้งไทย จำกัด',
+                    date: '2024-01-15',
+                    total: 25500,
+                    items: 3,
+                    status: 'pending',
+                    statusThai: 'รอการอนุมัติ'
+                },
+                {
+                    id: 'PO-2024-002',
+                    supplier: 'สหกรณ์เกษตรกรผลไม้',
+                    date: '2024-01-10',
+                    total: 18750,
+                    items: 2,
+                    status: 'approved',
+                    statusThai: 'อนุมัติแล้ว'
+                },
+                {
+                    id: 'PO-2024-003',
+                    supplier: 'เนเจอรัล ดรายฟรุ้ต',
+                    date: '2024-01-05',
+                    total: 32000,
+                    items: 4,
+                    status: 'delivered',
+                    statusThai: 'ส่งมอบแล้ว'
+                }
+            ];
+        }
+
+        function loadSuppliers() {
+            const supplierGrid = document.getElementById('supplierGrid');
+            supplierGrid.innerHTML = '';
+
+            suppliers.forEach(supplier => {
+                const supplierCard = document.createElement('div');
+                supplierCard.className = 'supplier-card';
+                supplierCard.onclick = () => selectSupplier(supplier);
+                
+                const stars = '★'.repeat(Math.floor(supplier.rating)) + '☆'.repeat(5 - Math.floor(supplier.rating));
+                
+                supplierCard.innerHTML = `
+                    <div class="supplier-header">
+                        <div class="supplier-logo">${supplier.logo}</div>
+                        <div>
+                            <div class="supplier-name">${supplier.name}</div>
+                            <div class="supplier-type">${supplier.type}</div>
+                        </div>
+                    </div>
+                    <div class="supplier-details">
+                        <div><i class="fas fa-phone"></i> ${supplier.contact}</div>
+                        <div><i class="fas fa-envelope"></i> ${supplier.email}</div>
+                        <div><i class="fas fa-map-marker-alt"></i> ${supplier.address}</div>
+                    </div>
+                    <div class="supplier-rating">
+                        <span class="text-warning">${stars}</span>
+                        <span>(${supplier.rating})</span>
+                        <span class="ms-auto">${supplier.products.length} รายการ</span>
+                    </div>
+                `;
+                
+                supplierGrid.appendChild(supplierCard);
+            });
+
+            document.getElementById('supplierCount').textContent = suppliers.length;
+        }
+
+        function selectSupplier(supplier) {
+            selectedSupplier = supplier;
+            
+            // Update selected supplier display
+            document.querySelectorAll('.supplier-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Show product catalog
+            document.getElementById('productSection').style.display = 'block';
+            document.getElementById('selectedSupplierName').textContent = supplier.name;
+            
+            // Load products
+            loadProducts(supplier.products);
+            
+            // Show purchase interface
+            document.getElementById('purchaseInterface').style.display = 'grid';
+            loadPurchaseProducts(supplier.products);
+        }
+
+        function loadProducts(products) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                
+                const stockStatus = product.stock > 100 ? 'มีสินค้าพร้อมส่ง' : 
+                                  product.stock > 50 ? 'สินค้าเหลือน้อย' : 'ติดต่อสอบถาม';
+                
+                productCard.innerHTML = `
+                    <div class="product-image">${product.image}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">฿${product.price.toLocaleString()}</div>
+                    <div class="product-unit">ต่อ ${product.unit}</div>
+                    <div class="product-stock">${stockStatus}</div>
+                `;
+                
+                productGrid.appendChild(productCard);
+            });
+
+            document.getElementById('productCount').textContent = products.length;
+        }
+
+        function loadPurchaseProducts(products) {
+            const purchaseProductGrid = document.getElementById('purchaseProductGrid');
+            purchaseProductGrid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.onclick = () => addToCart(product);
+                
+                productCard.innerHTML = `
+                    <div class="product-image">${product.image}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">฿${product.price.toLocaleString()}</div>
+                    <div class="product-unit">ต่อ ${product.unit}</div>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> เพิ่มลงตะกร้า
+                    </button>
+                `;
+                
+                purchaseProductGrid.appendChild(productCard);
+            });
+        }
+
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.id === product.id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...product,
+                    quantity: 1
+                });
+            }
+            
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            const emptyCart = document.getElementById('emptyCart');
+            
+            if (cart.length === 0) {
+                emptyCart.style.display = 'block';
+                cartItems.innerHTML = '<div class="text-center text-muted" id="emptyCart"><i class="fas fa-shopping-cart fa-2x mb-2"></i><p>ยังไม่มีสินค้าในตะกร้า</p></div>';
+                return;
+            }
+            
+            emptyCart.style.display = 'none';
+            cartItems.innerHTML = '';
+            
+            cart.forEach(item => {
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-details">฿${item.price.toLocaleString()} × ${item.quantity} = ฿${(item.price * item.quantity).toLocaleString()}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-control" onclick="updateQuantity(${item.id}, -1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" class="qty-input" value="${item.quantity}" min="1" 
+                               onchange="setQuantity(${item.id}, this.value)">
+                        <button class="qty-control" onclick="updateQuantity(${item.id}, 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="qty-control" onclick="removeFromCart(${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+        }
+
+        function updateQuantity(productId, change) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    updateCartDisplay();
+                    updateCartSummary();
+                }
+            }
+        }
+
+        function setQuantity(productId, quantity) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity = Math.max(1, parseInt(quantity) || 1);
+                updateCartDisplay();
+                updateCartSummary();
+            }
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartDisplay();
+            updateCartSummary();
+        }
+
+        function updateCartSummary() {
+            const cartItemCount = document.getElementById('cartItemCount');
+            const cartTotal = document.getElementById('cartTotal');
+            const submitOrderBtn = document.getElementById('submitOrderBtn');
+            
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discount = 0; // Can be implemented later
+            const tax = subtotal * 0.07;
+            const grandTotal = subtotal - discount + tax;
+            
+            cartItemCount.textContent = totalItems;
+            
+            if (cart.length > 0) {
+                cartTotal.style.display = 'block';
+                submitOrderBtn.disabled = false;
+                
+                document.getElementById('subtotal').textContent = `฿${subtotal.toLocaleString()}`;
+                document.getElementById('discount').textContent = `฿${discount.toLocaleString()}`;
+                document.getElementById('tax').textContent = `฿${tax.toLocaleString()}`;
+                document.getElementById('grandTotal').textContent = `฿${grandTotal.toLocaleString()}`;
+            } else {
+                cartTotal.style.display = 'none';
+                submitOrderBtn.disabled = true;
+            }
+        }
+
+        function clearCart() {
+            if (cart.length > 0 && confirm('ต้องการล้างตะกร้าสั่งซื้อหรือไม่?')) {
+                cart = [];
+                updateCartDisplay();
+                updateCartSummary();
+            }
+        }
+
+        function submitPurchaseOrder() {
+            if (cart.length === 0) return;
+            
+            const deliveryDate = document.getElementById('deliveryDate').value;
+            const orderNotes = document.getElementById('orderNotes').value;
+            
+            if (!deliveryDate) {
+                alert('กรุณาระบุวันที่ส่งมอบ');
+                return;
+            }
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.07;
+            const grandTotal = subtotal + tax;
+            
+            const newOrder = {
+                id: 'PO-2024-' + String(orderHistory.length + 1).padStart(3, '0'),
+                supplier: selectedSupplier.name,
+                date: new Date().toLocaleDateString('th-TH'),
+                total: grandTotal,
+                items: cart.length,
+                status: 'pending',
+                statusThai: 'รอการอนุมัติ',
+                deliveryDate: deliveryDate,
+                notes: orderNotes,
+                cartItems: [...cart]
+            };
+            
+            orderHistory.unshift(newOrder);
+            
+            // Clear cart
+            cart = [];
+            updateCartDisplay();
+            updateCartSummary();
+            
+            // Reset form
+            document.getElementById('deliveryDate').value = '';
+            document.getElementById('orderNotes').value = '';
+            
+            // Update displays
+            loadOrderHistory();
+            updateStats();
+            
+            alert(`ส่งใบสั่งซื้อ ${newOrder.id} เรียบร้อยแล้ว!\nยอดรวม: ฿${grandTotal.toLocaleString()}`);
+        }
+
+        function loadOrderHistory() {
+            const orderHistoryList = document.getElementById('orderHistoryList');
+            orderHistoryList.innerHTML = '';
+            
+            if (orderHistory.length === 0) {
+                orderHistoryList.innerHTML = '<p class="text-center text-muted">ยังไม่มีประวัติการสั่งซื้อ</p>';
+                return;
+            }
+            
+            orderHistory.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'order-item';
+                
+                const isManager = true; // Mock user role
+                const showApprovalActions = order.status === 'pending' && isManager;
+                
+                orderDiv.innerHTML = `
+                    <div class="order-header">
+                        <div class="order-id">${order.id}</div>
+                        <div class="order-status status-${order.status}">${order.statusThai}</div>
+                    </div>
+                    <div class="order-details">
+                        <div>
+                            <strong>ซัพพลายเออร์:</strong> ${order.supplier}<br>
+                            <strong>วันที่:</strong> ${order.date}<br>
+                            <strong>จำนวน:</strong> ${order.items} รายการ
+                        </div>
+                        <div>
+                            <strong>ยอดรวม:</strong> ฿${order.total.toLocaleString()}
+                        </div>
+                    </div>
+                    ${showApprovalActions ? `
+                        <div class="approval-actions">
+                            <button class="btn-approve" onclick="approveOrder('${order.id}')">
+                                <i class="fas fa-check"></i> อนุมัติ
+                            </button>
+                            <button class="btn-reject" onclick="rejectOrder('${order.id}')">
+                                <i class="fas fa-times"></i> ไม่อนุมัติ
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="viewOrderDetails('${order.id}')">
+                                <i class="fas fa-eye"></i> ดูรายละเอียด
+                            </button>
+                        </div>
+                    ` : ''}
+                    <div class="mt-2">
+                        <button class="btn btn-primary btn-sm me-2" onclick="printOrder('${order.id}')">
+                            <i class="fas fa-print"></i> ปริ้นท์ใบสั่งซื้อ
+                        </button>
+                        ${order.status === 'delivered' ? `
+                            <button class="btn btn-success btn-sm" onclick="printGoodsReceipt('${order.id}')">
+                                <i class="fas fa-receipt"></i> ปริ้นท์ใบรับสินค้า
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                orderHistoryList.appendChild(orderDiv);
+            });
+        }
+
+        function approveOrder(orderId) {
+            if (confirm('ต้องการอนุมัติใบสั่งซื้อนี้หรือไม่?')) {
+                const order = orderHistory.find(o => o.id === orderId);
+                if (order) {
+                    order.status = 'approved';
+                    order.statusThai = 'อนุมัติแล้ว';
+                    loadOrderHistory();
+                    updateStats();
+                    alert(`อนุมัติใบสั่งซื้อ ${orderId} เรียบร้อยแล้ว`);
+                }
+            }
+        }
+
+        function rejectOrder(orderId) {
+            const reason = prompt('กรุณาระบุเหตุผลในการไม่อนุมัติ:');
+            if (reason) {
+                const order = orderHistory.find(o => o.id === orderId);
+                if (order) {
+                    order.status = 'rejected';
+                    order.statusThai = 'ไม่อนุมัติ';
+                    order.rejectReason = reason;
+                    loadOrderHistory();
+                    updateStats();
+                    alert(`ไม่อนุมัติใบสั่งซื้อ ${orderId} เรียบร้อยแล้ว`);
+                }
+            }
+        }
+
+        function viewOrderDetails(orderId) {
+            const order = orderHistory.find(o => o.id === orderId);
+            if (order) {
+                // Show order details in modal
+                const modalContent = document.getElementById('orderModalContent');
+                modalContent.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>ข้อมูลใบสั่งซื้อ</h6>
+                            <p><strong>เลขที่:</strong> ${order.id}</p>
+                            <p><strong>ซัพพลายเออร์:</strong> ${order.supplier}</p>
+                            <p><strong>วันที่:</strong> ${order.date}</p>
+                            <p><strong>สถานะ:</strong> <span class="order-status status-${order.status}">${order.statusThai}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>ข้อมูลการส่งมอบ</h6>
+                            <p><strong>วันที่ส่งมอบ:</strong> ${order.deliveryDate || 'ไม่ระบุ'}</p>
+                            <p><strong>หมายเหตุ:</strong> ${order.notes || 'ไม่มี'}</p>
+                            <p><strong>ยอดรวม:</strong> ฿${order.total.toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+                
+                new bootstrap.Modal(document.getElementById('purchaseOrderModal')).show();
+            }
+        }
+
+        function updateStats() {
+            const totalOrders = orderHistory.length;
+            const pendingOrders = orderHistory.filter(o => o.status === 'pending').length;
+            const totalValue = orderHistory.reduce((sum, order) => sum + order.total, 0);
+            const activeSuppliers = suppliers.length;
+            
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('pendingOrders').textContent = pendingOrders;
+            document.getElementById('totalValue').textContent = '฿' + totalValue.toLocaleString();
+            document.getElementById('activeSuppliers').textContent = activeSuppliers;
+        }
+
+        function initializeFilters() {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    const filteredOrders = filter === 'all' ? 
+                        orderHistory : 
+                        orderHistory.filter(order => order.status === filter);
+                    
+                    displayFilteredOrders(filteredOrders);
+                });
+            });
+        }
+
+        function displayFilteredOrders(orders) {
+            const orderHistoryList = document.getElementById('orderHistoryList');
+            orderHistoryList.innerHTML = '';
+            
+            orders.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'order-item';
+                
+                orderDiv.innerHTML = `
+                    <div class="order-header">
+                        <div class="order-id">${order.id}</div>
+                        <div class="order-status status-${order.status}">${order.statusThai}</div>
+                    </div>
+                    <div class="order-details">
+                        <div>
+                            <strong>ซัพพลายเออร์:</strong> ${order.supplier}<br>
+                            <strong>วันที่:</strong> ${order.date}<br>
+                            <strong>จำนวน:</strong> ${order.items} รายการ
+                        </div>
+                        <div>
+                            <strong>ยอดรวม:</strong> ฿${order.total.toLocaleString()}
+                        </div>
+                    </div>
+                `;
+                
+                orderHistoryList.appendChild(orderDiv);
+            });
+        }
+
+        function setDefaultDeliveryDate() {
+            const today = new Date();
+            today.setDate(today.getDate() + 7); // Default to 7 days from now
+            document.getElementById('deliveryDate').value = today.toISOString().split('T')[0];
+        }
+
+        function newPurchaseOrder() {
+            // Reset selections
+            selectedSupplier = null;
+            cart = [];
+            
+            // Hide sections
+            document.getElementById('productSection').style.display = 'none';
+            document.getElementById('purchaseInterface').style.display = 'none';
+            
+            // Clear supplier selections
+            document.querySelectorAll('.supplier-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            updateCartDisplay();
+            updateCartSummary();
+            
+            // Scroll to supplier selection
+            document.getElementById('supplierSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function viewPendingOrders() {
+            const pendingOrders = orderHistory.filter(o => o.status === 'pending');
+            displayFilteredOrders(pendingOrders);
+            
+            // Update filter tab
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.filter-tab[data-filter="pending"]').classList.add('active');
+            
+            // Scroll to order history
+            document.querySelector('.order-history').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function saveAsDraft() {
+            if (cart.length > 0) {
+                const draftData = {
+                    supplier: selectedSupplier,
+                    cart: cart,
+                    deliveryDate: document.getElementById('deliveryDate').value,
+                    notes: document.getElementById('orderNotes').value
+                };
+                
+                localStorage.setItem('purchaseOrderDraft', JSON.stringify(draftData));
+                alert('💾 บันทึก Draft เรียบร้อยแล้ว');
+            }
+        }
+
+        // Load draft if exists
+        window.addEventListener('load', function() {
+            const draft = localStorage.getItem('purchaseOrderDraft');
+            if (draft) {
+                const draftData = JSON.parse(draft);
+                if (confirm('พบ Draft ที่บันทึกไว้ ต้องการโหลดหรือไม่?')) {
+                    // Load draft data
+                    if (draftData.supplier) {
+                        selectSupplier(draftData.supplier);
+                    }
+                    if (draftData.cart) {
+                        cart = draftData.cart;
+                        updateCartDisplay();
+                        updateCartSummary();
+                    }
+                    if (draftData.deliveryDate) {
+                        document.getElementById('deliveryDate').value = draftData.deliveryDate;
+                    }
+                    if (draftData.notes) {
+                        document.getElementById('orderNotes').value = draftData.notes;
+                    }
+                }
+            }
+        });
+
+        // Calculation Functions
+        function calculateSubtotal() {
+            return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        }
+
+        function calculateTax() {
+            return Math.round(calculateSubtotal() * 0.07);
+        }
+
+        function calculateTotal() {
+            return calculateSubtotal() + calculateTax();
+        }
+
+        // Print Functions
+        function printPurchaseOrder() {
+            if (cart.length === 0) {
+                alert('ไม่สามารถปริ้นท์ได้ กรุณาเพิ่มสินค้าลงในตะกร้าก่อน');
+                return;
+            }
+            
+            generatePurchaseOrderPrint();
+        }
+
+        function printOrder(orderId) {
+            const order = orderHistory.find(o => o.id === orderId);
+            if (!order) {
+                alert('ไม่พบข้อมูลใบสั่งซื้อ');
+                return;
+            }
+            
+            generatePurchaseOrderPrint(order);
+        }
+
+        function printGoodsReceipt(orderId) {
+            const order = orderHistory.find(o => o.id === orderId);
+            if (!order) {
+                alert('ไม่พบข้อมูลใบสั่งซื้อ');
+                return;
+            }
+            
+            generateGoodsReceiptPrint(order);
+        }
+
+        function generatePurchaseOrderPrint(orderData = null) {
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            // Use current cart or order data
+            const data = orderData || {
+                id: 'PO-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+                supplier: selectedSupplier ? selectedSupplier.name : '',
+                supplierAddress: selectedSupplier ? selectedSupplier.address : '',
+                supplierContact: selectedSupplier ? selectedSupplier.contact : '',
+                supplierEmail: selectedSupplier ? selectedSupplier.email : '',
+                date: new Date().toLocaleDateString('th-TH'),
+                deliveryDate: document.getElementById('deliveryDate').value,
+                notes: document.getElementById('orderNotes').value,
+                items: cart,
+                subtotal: calculateSubtotal(),
+                tax: calculateTax(),
+                total: calculateTotal()
+            };
+            
+            const printContent = `
+                <!DOCTYPE html>
+                <html lang="th">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบสั่งซื้อ - ${data.id}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Prompt', sans-serif;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: #333;
+                            background: white;
+                        }
+                        .container {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #FF8C00;
+                            padding-bottom: 15px;
+                        }
+                        .company-name {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #FF8C00;
+                            margin-bottom: 5px;
+                        }
+                        .document-title {
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #2C1810;
+                            margin-bottom: 10px;
+                        }
+                        .document-info {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 30px;
+                        }
+                        .info-section {
+                            flex: 1;
+                            padding: 0 10px;
+                        }
+                        .info-title {
+                            font-weight: 600;
+                            color: #8B4513;
+                            margin-bottom: 10px;
+                            border-bottom: 1px solid #FFD700;
+                            padding-bottom: 5px;
+                        }
+                        .info-item {
+                            margin-bottom: 5px;
+                        }
+                        .info-label {
+                            font-weight: 500;
+                            color: #2C1810;
+                        }
+                        .items-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        .items-table th,
+                        .items-table td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        .items-table th {
+                            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                            color: #2C1810;
+                            font-weight: 600;
+                        }
+                        .items-table tr:nth-child(even) {
+                            background: #FFFACD;
+                        }
+                        .text-right {
+                            text-align: right;
+                        }
+                        .text-center {
+                            text-align: center;
+                        }
+                        .totals {
+                            margin-top: 20px;
+                            text-align: right;
+                        }
+                        .total-row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 5px;
+                            padding: 5px 0;
+                        }
+                        .total-row.final {
+                            font-weight: 700;
+                            font-size: 16px;
+                            border-top: 2px solid #FF8C00;
+                            padding-top: 10px;
+                            color: #FF8C00;
+                        }
+                        .signatures {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 50px;
+                        }
+                        .signature-box {
+                            text-align: center;
+                            width: 200px;
+                        }
+                        .signature-line {
+                            border-bottom: 1px solid #333;
+                            margin: 30px 0 10px 0;
+                            height: 50px;
+                        }
+                        .notes {
+                            margin-top: 30px;
+                            padding: 15px;
+                            background: #FFFACD;
+                            border-left: 4px solid #FFD700;
+                        }
+                        .notes-title {
+                            font-weight: 600;
+                            margin-bottom: 10px;
+                        }
+                        @media print {
+                            body {
+                                font-size: 12px;
+                            }
+                            .container {
+                                margin: 0;
+                                padding: 10px;
+                            }
+                            .signatures {
+                                margin-top: 30px;
+                            }
+                            .signature-line {
+                                height: 40px;
+                                margin: 20px 0 10px 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="company-name">ระบบจัดการสต๊อคผลไม้อบแห้ง</div>
+                            <div class="document-title">ใบสั่งซื้อ (Purchase Order)</div>
+                        </div>
+                        
+                        <div class="document-info">
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลใบสั่งซื้อ</div>
+                                <div class="info-item">
+                                    <span class="info-label">เลขที่:</span> ${data.id}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่:</span> ${data.date}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่ต้องการส่งมอบ:</span> ${data.deliveryDate || 'ไม่ระบุ'}
+                                </div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลซัพพลายเออร์</div>
+                                <div class="info-item">
+                                    <span class="info-label">ชื่อ:</span> ${data.supplier}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">ที่อยู่:</span> ${data.supplierAddress}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">โทรศัพท์:</span> ${data.supplierContact}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">อีเมล:</span> ${data.supplierEmail}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">ลำดับ</th>
+                                    <th width="40%">รายการสินค้า</th>
+                                    <th width="15%">จำนวน</th>
+                                    <th width="15%">ราคาต่อหน่วย</th>
+                                    <th width="15%">ยอดรวม</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.items.map((item, index) => `
+                                    <tr>
+                                        <td class="text-center">${index + 1}</td>
+                                        <td>${item.name}</td>
+                                        <td class="text-center">${item.quantity} ${item.unit}</td>
+                                        <td class="text-right">฿${item.price.toLocaleString()}</td>
+                                        <td class="text-right">฿${(item.price * item.quantity).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div class="totals">
+                            <div class="total-row">
+                                <span>ยอดรวม:</span>
+                                <span>฿${data.subtotal.toLocaleString()}</span>
+                            </div>
+                            <div class="total-row">
+                                <span>ส่วนลด:</span>
+                                <span>฿0.00</span>
+                            </div>
+                            <div class="total-row">
+                                <span>ภาษี 7%:</span>
+                                <span>฿${data.tax.toLocaleString()}</span>
+                            </div>
+                            <div class="total-row final">
+                                <span>ยอดสุทธิ:</span>
+                                <span>฿${data.total.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        
+                        ${data.notes ? `
+                            <div class="notes">
+                                <div class="notes-title">หมายเหตุ:</div>
+                                <div>${data.notes}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="signatures">
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้สั่งซื้อ</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้อนุมัติ</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้รับใบสั่งซื้อ (ซัพพลายเออร์)</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+
+        function generateGoodsReceiptPrint(orderData) {
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            // Generate mock received items with variations
+            const receivedItems = orderData.items ? orderData.items.map(item => ({
+                ...item,
+                ordered: item.quantity,
+                received: item.quantity + (Math.random() > 0.7 ? Math.floor(Math.random() * 5) - 2 : 0)
+            })) : [];
+            
+            const printContent = `
+                <!DOCTYPE html>
+                <html lang="th">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>ใบรับสินค้า - ${orderData.id}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Prompt', sans-serif;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: #333;
+                            background: white;
+                        }
+                        .container {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #32CD32;
+                            padding-bottom: 15px;
+                        }
+                        .company-name {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #32CD32;
+                            margin-bottom: 5px;
+                        }
+                        .document-title {
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #2C1810;
+                            margin-bottom: 10px;
+                        }
+                        .document-info {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 30px;
+                        }
+                        .info-section {
+                            flex: 1;
+                            padding: 0 10px;
+                        }
+                        .info-title {
+                            font-weight: 600;
+                            color: #228B22;
+                            margin-bottom: 10px;
+                            border-bottom: 1px solid #32CD32;
+                            padding-bottom: 5px;
+                        }
+                        .info-item {
+                            margin-bottom: 5px;
+                        }
+                        .info-label {
+                            font-weight: 500;
+                            color: #2C1810;
+                        }
+                        .items-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        .items-table th,
+                        .items-table td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        .items-table th {
+                            background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+                            color: white;
+                            font-weight: 600;
+                        }
+                        .items-table tr:nth-child(even) {
+                            background: #F0FFF0;
+                        }
+                        .text-right {
+                            text-align: right;
+                        }
+                        .text-center {
+                            text-align: center;
+                        }
+                        .status-match {
+                            background-color: #D1F2D1 !important;
+                            color: #155724;
+                        }
+                        .status-short {
+                            background-color: #F8D7DA !important;
+                            color: #721C24;
+                        }
+                        .status-over {
+                            background-color: #CCE5FF !important;
+                            color: #004085;
+                        }
+                        .summary {
+                            margin-top: 30px;
+                            padding: 15px;
+                            background: #F0FFF0;
+                            border-left: 4px solid #32CD32;
+                        }
+                        .summary-title {
+                            font-weight: 600;
+                            margin-bottom: 10px;
+                            color: #228B22;
+                        }
+                        .summary-row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 5px;
+                        }
+                        .signatures {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 50px;
+                        }
+                        .signature-box {
+                            text-align: center;
+                            width: 200px;
+                        }
+                        .signature-line {
+                            border-bottom: 1px solid #333;
+                            margin: 30px 0 10px 0;
+                            height: 50px;
+                        }
+                        @media print {
+                            body {
+                                font-size: 12px;
+                            }
+                            .container {
+                                margin: 0;
+                                padding: 10px;
+                            }
+                            .signatures {
+                                margin-top: 30px;
+                            }
+                            .signature-line {
+                                height: 40px;
+                                margin: 20px 0 10px 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="company-name">ระบบจัดการสต๊อคผลไม้อบแห้ง</div>
+                            <div class="document-title">ใบรับสินค้า (Goods Receipt)</div>
+                        </div>
+                        
+                        <div class="document-info">
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลการรับสินค้า</div>
+                                <div class="info-item">
+                                    <span class="info-label">เลขที่ใบรับสินค้า:</span> GR-${orderData.id.replace('PO-', '')}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">อ้างอิง PO:</span> ${orderData.id}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่รับสินค้า:</span> ${new Date().toLocaleDateString('th-TH')}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">ผู้รับสินค้า:</span> คลังสินค้า
+                                </div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <div class="info-title">ข้อมูลซัพพลายเออร์</div>
+                                <div class="info-item">
+                                    <span class="info-label">ชื่อ:</span> ${orderData.supplier}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่สั่งซื้อ:</span> ${orderData.date}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">วันที่ส่งมอบ:</span> ${orderData.deliveryDate || 'ไม่ระบุ'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">ลำดับ</th>
+                                    <th width="35%">รายการสินค้า</th>
+                                    <th width="15%">จำนวนที่สั่ง</th>
+                                    <th width="15%">จำนวนที่รับ</th>
+                                    <th width="15%">ส่วนต่าง</th>
+                                    <th width="15%">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${receivedItems.map((item, index) => {
+                                    const difference = item.received - item.ordered;
+                                    const status = difference === 0 ? 'ตรงกัน' : difference > 0 ? 'เกิน' : 'ขาด';
+                                    const statusClass = difference === 0 ? 'status-match' : difference > 0 ? 'status-over' : 'status-short';
+                                    
+                                    return `
+                                        <tr>
+                                            <td class="text-center">${index + 1}</td>
+                                            <td>${item.name}</td>
+                                            <td class="text-center">${item.ordered} ${item.unit}</td>
+                                            <td class="text-center">${item.received} ${item.unit}</td>
+                                            <td class="text-center">${difference > 0 ? '+' : ''}${difference}</td>
+                                            <td class="text-center ${statusClass}">${status}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div class="summary">
+                            <div class="summary-title">สรุปผลการรับสินค้า</div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่สั่งซื้อ:</span>
+                                <span>${receivedItems.length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่รับครบ:</span>
+                                <span>${receivedItems.filter(item => item.received === item.ordered).length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่ขาด:</span>
+                                <span>${receivedItems.filter(item => item.received < item.ordered).length} รายการ</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>จำนวนรายการที่เกิน:</span>
+                                <span>${receivedItems.filter(item => item.received > item.ordered).length} รายการ</span>
+                            </div>
+                        </div>
+                        
+                        <div class="signatures">
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้ส่งสินค้า</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้รับสินค้า</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div>ผู้ตรวจสอบ</div>
+                                <div>วันที่: _______________</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+</html>
